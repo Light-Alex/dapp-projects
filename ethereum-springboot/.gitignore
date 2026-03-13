@@ -1,0 +1,3 @@
+# target目录下，除了classes目录，其他都忽略
+target/*
+!target/classes/
