@@ -32,10 +32,6 @@ task("deploy-ignition", "Deploy using Ignition and save deployment info")
     try {
       const deployParams = {};
 
-      if (args.verify) {
-        deployParams.verify = true;
-      }
-
       await hre.ignition.deploy(module, deployParams);
       console.log("✅ Deployment completed successfully");
     } catch (error) {
@@ -62,9 +58,10 @@ task("deploy-ignition", "Deploy using Ignition and save deployment info")
     const deployedAddresses = JSON.parse(fs.readFileSync(deployedAddressesFile, "utf8"));
     console.log("✅ Found deployment addresses:", deployedAddresses);
 
-    // 从 journal.jsonl 提取交易 hash
+    // 从 journal.jsonl 提取交易 hash 和构造函数参数
     const journalFile = path.join(deploymentDir, `chain-${chainId}/journal.jsonl`);
     let transactions = {};
+    let constructorArgsMap = {};
 
     if (fs.existsSync(journalFile)) {
       const journalContent = fs.readFileSync(journalFile, "utf8");
@@ -78,6 +75,11 @@ task("deploy-ignition", "Deploy using Ignition and save deployment info")
             const futureId = entry.futureId;
             transactions[futureId] = entry.hash;
           }
+          // 从 DEPLOYMENT_EXECUTION_STATE_INITIALIZE 提取构造函数参数
+          if (entry.type === "DEPLOYMENT_EXECUTION_STATE_INITIALIZE" && entry.constructorArgs) {
+            const futureId = entry.futureId;
+            constructorArgsMap[futureId] = entry.constructorArgs;
+          }
         } catch (e) {
           // 跳过无法解析的行
         }
@@ -86,6 +88,25 @@ task("deploy-ignition", "Deploy using Ignition and save deployment info")
     } else {
       console.log("⚠️  Journal file not found at:", journalFile);
     }
+
+    // 获取当前模块的名称（从模块对象中获取）
+    const currentModuleName = module.id || moduleName;
+
+    // 过滤出只属于当前模块的合约
+    const currentModuleContracts = {};
+    for (const [contractKey, address] of Object.entries(deployedAddresses)) {
+      // 提取模块名（格式：ModuleName#ContractName）
+      const moduleOfContract = contractKey.includes("#")
+        ? contractKey.split("#")[0]
+        : contractKey;
+
+      // 只处理属于当前模块的合约
+      if (moduleOfContract === currentModuleName || contractKey.startsWith(currentModuleName + "#")) {
+        currentModuleContracts[contractKey] = address;
+      }
+    }
+
+    console.log(`\n✅ Found ${Object.keys(currentModuleContracts).length} contract(s) in current module`);
 
     // 获取部署者地址
     const [deployer] = await hre.ethers.getSigners();
@@ -98,7 +119,7 @@ task("deploy-ignition", "Deploy using Ignition and save deployment info")
 
     // 为每个合约单独保存文件
     const contracts = [];
-    for (const [contractKey, address] of Object.entries(deployedAddresses)) {
+    for (const [contractKey, address] of Object.entries(currentModuleContracts)) {
       // 提取合约名称（格式：ModuleName#ContractName）
       const contractName = contractKey.includes("#")
         ? contractKey.split("#")[1]
@@ -122,7 +143,42 @@ task("deploy-ignition", "Deploy using Ignition and save deployment info")
       const outputFile = path.join(outputDir, `${hre.network.name}-${chainId}-${contractName}.json`);
       fs.writeFileSync(outputFile, JSON.stringify(deploymentInfo, null, 2));
 
-      contracts.push({ ...deploymentInfo.contract, file: outputFile });
+      contracts.push({ ...deploymentInfo.contract, file: outputFile, contractKey });
+    }
+
+    // 如果需要验证，进行合约验证
+    if (args.verify) {
+      console.log("\n🔍 Verifying contracts on Etherscan...");
+
+      for (const contract of contracts) {
+        let constructorArgs = [];
+
+        try {
+          console.log(`  Verifying ${contract.name} at ${contract.address}...`);
+
+          // 从 constructorArgsMap 中获取构造函数参数
+          constructorArgs = constructorArgsMap[contract.contractKey] || [];
+
+          // 构建验证参数
+          const verifyArgs = {
+            address: contract.address,
+            constructorArguments: constructorArgs
+          };
+
+          // 调用验证
+          await hre.run("verify:verify", verifyArgs);
+          console.log(`  ✅ ${contract.name} verified successfully!`);
+        } catch (error) {
+          // 如果是 "Already Verified" 错误，不算失败
+          if (error.message.includes("Already Verified") || error.message.includes("already verified")) {
+            console.log(`  ✅ ${contract.name} already verified`);
+          } else {
+            console.log(`  ⚠️  ${contract.name} verification failed: ${error.message}`);
+            console.log(`     You can verify manually later:`);
+            console.log(`     npx hardhat verify --network ${hre.network.name} ${contract.address} ${constructorArgs ? constructorArgs.join(" ") : ""}`);
+          }
+        }
+      }
     }
 
     console.log("\n✅ Deployment info saved!");
