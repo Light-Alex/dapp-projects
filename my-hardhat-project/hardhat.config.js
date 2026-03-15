@@ -25,7 +25,7 @@ module.exports = {
     },
     // 测试网络配置
     sepolia: {
-      url: process.env.SEPOLIA_URL || "",
+      url: process.env.ALCHEMY_SEPOLIA_URL || "",
       accounts: process.env.SEPOLIA_PRIVATE_KEY ? [process.env.SEPOLIA_PRIVATE_KEY] : []
     }
   },
