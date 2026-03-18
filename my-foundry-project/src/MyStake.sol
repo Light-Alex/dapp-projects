@@ -106,6 +106,7 @@ contract MtkContracts {
         }
     }
 
+    // 计算用户质押订单的奖励金额
     function calculateReward(address user, uint256 stakeId) public view returns (uint256 totalAmount) {
         Stake storage stk;
         uint256 stakeIndex;
@@ -113,6 +114,14 @@ contract MtkContracts {
         
         uint256 reward = stk.amount * stk.rewardRate / PRECISION / 100;
         totalAmount = stk.amount + reward;
+    }
+
+    // 查询质押是否到期
+    function isStakeExpired(address user, uint256 stakeId) public view returns (bool) {
+        Stake storage stk;
+        uint256 stakeIndex;
+        (stk, stakeIndex) = _getStakeById(user, stakeId);
+        return block.timestamp >= stk.endTime;
     }
     
     // 提现函数
