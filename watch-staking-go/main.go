@@ -21,7 +21,7 @@ import (
 // 配置常量
 const (
 	StakingContractAddress = "0x6287A4e265CfEA1B9C87C1dC692363d69f58378c"
-	RPCURL                 = "wss://bnb-testnet.g.alchemy.com/v2/Z7oyiL7IXfGadWb_-cwpe"
+	RPCURL                 = ""
 	ReconnectInterval      = 5 * time.Second
 	MaxReconnectAttempts   = 10
 )
