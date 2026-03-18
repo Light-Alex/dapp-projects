@@ -1,0 +1,23 @@
+{
+  "include": [
+    "src/**/*"
+  ],
+  "compilerOptions": {
+    "outDir": "./dist",
+    "esModuleInterop": true,
+    "declaration": true,
+    "declarationMap": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "lib": [
+      "ESNext", "ES2020", "DOM", "DOM.Iterable"
+    ],
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "strict": true,
+    "target": "ES2020"
+  }
+}
