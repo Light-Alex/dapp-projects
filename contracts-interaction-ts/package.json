@@ -1,11 +1,12 @@
 {
-  "name": "staking-interaction",
+  "name": "contracts-interaction",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "index": "node src/index.js",
     "watchMyStake": "tsc && node dist/watchMyStake.js",
+    "batchTransfer": "tsc && node dist/batchTransfer.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
