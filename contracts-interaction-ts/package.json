@@ -7,6 +7,7 @@
     "index": "node src/index.js",
     "watchMyStake": "tsc && node dist/watchMyStake.js",
     "batchTransfer": "tsc && node dist/batchTransfer.js",
+    "transferERC20AndBNB": "tsc && node dist/transferERC20AndBNB.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
