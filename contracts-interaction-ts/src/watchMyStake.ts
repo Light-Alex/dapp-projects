@@ -1,5 +1,7 @@
 import { ethers, Contract, EventLog, ContractEventPayload  } from 'ethers';
 import dotenv from 'dotenv';
+import * as path from 'path';
+import * as fs from 'fs';
 
 dotenv.config();
 
@@ -40,7 +42,7 @@ class StakingEventListener {
     };
 
     // 导入 ABI
-    this.stakingABI = require('../abis/MtkContracts.json');
+    this.stakingABI = JSON.parse(fs.readFileSync(path.join(__dirname, '../src/abis/MtkContracts.json'), 'utf8'));
   }
 
   /**
