@@ -1,0 +1,7 @@
+/.idea/
+/c2n-be/deployment/mysql/data/
+/c2n-be/deployment/docker-env/portal-api.env
+/c2n-be/utils/http-client.env.json
+.DS_Store
+.deps
+node_modules
