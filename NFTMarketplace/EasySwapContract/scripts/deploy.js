@@ -15,7 +15,7 @@ async function main() {
 
   let esVault = await ethers.getContractFactory("EasySwapVault");
   esVault = await upgrades.deployProxy(esVault, { initializer: "initialize" });
-  // await esVault.deployed();
+  await esVault.waitForDeployment();
   console.log("esVault contract deployed to:", await esVault.getAddress());
   console.log(
     await upgrades.erc1967.getImplementationAddress(await esVault.getAddress()),
@@ -36,7 +36,7 @@ async function main() {
     [newProtocolShare, newESVault, EIP712Name, EIP712Version],
     { initializer: "initialize" }
   );
-  // await esDex.deployed();
+  await esDex.waitForDeployment();
   console.log("esDex contract deployed to:", await esDex.getAddress());
   console.log(
     await upgrades.erc1967.getImplementationAddress(await esDex.getAddress()),

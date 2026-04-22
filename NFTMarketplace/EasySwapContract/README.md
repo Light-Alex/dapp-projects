@@ -389,7 +389,105 @@ const buyOrder = {
 
 
 
+### 部署前准备
+
+#### 环境要求
+
+| 依赖 | 最低版本 | 推荐版本 | 说明 |
+|------|---------|---------|------|
+| Node.js | >= 18.18.0 | >= 20.0.0 (LTS) | JavaScript 运行环境（前端 Next.js 15 要求） |
+| npm | >= 9.0.0 | >= 10.0.0 | 包管理器 |
+
+**检查 Node.js 版本**：
+```bash
+node --version
+```
+
+**安装 Node.js**：
+- 官网下载：https://nodejs.org/ （推荐下载 LTS 20.x 版本）
+- 使用 nvm（推荐）：
+  ```bash
+  nvm install v20.20.0
+  nvm use v20.20.0
+  ```
+
+#### 依赖安装
+
+1. **克隆项目**（如果尚未克隆）：
+```bash
+git clone <repository-url>
+cd EasySwapContract
+```
+
+2. **安装依赖**：
+```bash
+npm install
+```
+
+**主要依赖**：
+| 依赖包 | 版本 | 用途 |
+|--------|------|------|
+| hardhat | ^2.22.19 | 以太坊开发框架 |
+| @openzeppelin/hardhat-upgrades | ^3.9.0 | 可升级合约部署 |
+| @openzeppelin/contracts-upgradeable | ^5.2.0 | 可升级合约库 |
+| @nomicfoundation/hardhat-toolbox | ^5.0.0 | Hardhat 工具集 |
+| ethers | ^6.13.5 | 以太坊交互库 |
+| dotenv | ^16.4.7 | 环境变量管理 |
+
+3. **配置环境变量**：
+
+复制示例配置文件：
+```bash
+cp .env.example .env
+```
+
+编辑 `.env` 文件，填入实际的配置值：
+```bash
+# Ethereum Sepolia Testnet
+SEPOLIA_ALCHEMY_AK=你的Alchemy_API_Key
+SEPOLIA_PK_ONE=你的私钥_0x开头
+
+# BSC Testnet
+BSC_TESTNET_ALCHEMY_AK=你的BSC_Alchemy_API_Key
+BSC_TESTNET_PK=你的私钥_0x开头
+```
+
+**获取 Alchemy API Key**：
+1. 访问 https://www.alchemy.com/
+2. 注册并创建新 App
+3. 选择网络（Ethereum Sepolia / BSC Testnet）
+4. 复制 API Key 到 `.env` 文件
+
+**获取 Alchemy BSC API Key**：
+1. 访问 https://www.alchemy.com/
+2. 创建新 App 时链选择 "BNB Smart Chain"
+3. 网络选择 "Testnet"
+4. 复制 API Key
+
 ### 本地部署测试
+
+#### 部署脚本说明
+
+| 脚本文件 | 命令 | 功能说明 |
+|---------|------|---------|
+| `deploy.js` | `npx hardhat run scripts/deploy.js` | **主部署脚本**<br>• 部署 EasySwapVault（资产保管库）<br>• 部署 EasySwapOrderBook（订单簿合约）<br>• 使用 UUPS 可升级代理模式<br>• 初始化协议费率为 2%<br>• 建立 Vault 与 OrderBook 的关联 |
+| `deploy_721.js` | `npx hardhat run scripts/deploy_721.js` | **NFT 测试合约部署**<br>• 部署 TestERC721 测试用 NFT 合约<br>• 为部署者铸造测试 NFT |
+| `interact.js` | `npx hardhat run scripts/interact.js` | **交互与功能测试**<br>• 连接已部署的合约<br>• NFT 授权<br>• 批量创建卖单（20个测试订单）<br>• 支持订单取消、匹配等测试 |
+| `updateUseUpgradeProxy.js` | `npx hardhat run scripts/updateUseUpgradeProxy.js` | **合约升级脚本**<br>• 升级已部署的合约<br>• 保留合约状态和地址 |
+
+#### 部署流程
+
+```mermaid
+graph TD
+    A[启动本地节点] -->|npx hardhat node| B[部署核心合约]
+    B -->|deploy.js| C[部署测试NFT]
+    C -->|deploy_721.js| D[运行交互测试]
+    D -->|interact.js| E[完成]
+
+    F[合约升级] -.->|updateUseUpgradeProxy.js| B
+```
+
+#### 执行命令
 
 ```shell
 npx hardhat node
@@ -451,3 +549,51 @@ salt: 1
 
 
 ```
+
+### 测试网部署
+
+#### 环境配置
+
+在项目根目录的 `.env` 文件中添加以下配置：
+
+```bash
+# BSC Testnet (BNB Smart Chain Testnet)
+BSC_TESTNET_PK=你的私钥
+BSC_TESTNET_ALCHEMY_AK=你的Alchemy API Key
+```
+
+**获取测试币**：
+- BSC Testnet Faucet: https://testnet.bnbchain.org/faucet-smart
+
+**网络信息**：
+| 参数 | 值 |
+|------|-----|
+| Chain ID | 97 |
+| RPC URL | https://bnb-testnet.g.alchemy.com/v2/${BSC_TESTNET_ALCHEMY_AK} |
+| Block Explorer | https://testnet.bscscan.com |
+
+#### 部署命令
+
+```bash
+# 部署到 BSC Testnet
+npx hardhat run scripts/deploy.js --network bscTestnet
+
+# 部署测试 NFT 合约
+npx hardhat run scripts/deploy_721.js --network bscTestnet
+
+# 运行交互测试（需要先修改脚本中的合约地址）
+npx hardhat run scripts/interact.js --network bscTestnet
+
+# 升级已部署的合约
+npx hardhat run scripts/updateUseUpgradeProxy.js --network bscTestnet
+```
+
+#### 其他可用网络
+
+| 网络 | 命令参数 | Chain ID | 说明 |
+|------|---------|----------|------|
+| 本地网络 | `--network hardhat` | 31337 | Hardhat 内置网络 |
+| Ethereum Sepolia | `--network sepolia` | 11155111 | 以太坊测试网 |
+| BSC Testnet | `--network bscTestnet` | 97 | BNB 链测试网 |
+| Ethereum Mainnet | `--network mainnet` | 1 | 以太坊主网 |
+
