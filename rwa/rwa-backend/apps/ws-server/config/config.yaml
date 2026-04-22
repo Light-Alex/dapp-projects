@@ -1,0 +1,25 @@
+appName: "WS Server"
+server:
+  port: 8082
+  basePath: /api/v1/ws
+
+redis:
+  hosts:
+    - "127.0.0.1:6379"
+  password: ""
+  db: 0
+
+logger:
+  level: "debug"
+  encoderType: "console"
+  outputType: "all"
+  maxAge: 30
+  enableColor: true
+
+alpaca:
+  api_key: "PKCO3XINYF5OEDNYX2QK76P7TL"
+  api_secret: "H7JJw42qDoA6H1ETGa8DtvzKi7esneM1iaykzG1tXGrm"
+  ws_url: "wss://stream.data.alpaca.markets/v2/iex"
+  ws_data_url: "wss://stream.data.alpaca.markets/v2/iex"
+
+

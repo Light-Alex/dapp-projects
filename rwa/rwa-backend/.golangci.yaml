@@ -1,0 +1,63 @@
+version: "2"
+linters:
+  enable:
+    - asasalint
+    - asciicheck
+    - bidichk
+    - bodyclose
+#    - containedctx
+#    - contextcheck
+    - cyclop
+    - dupl
+    - durationcheck
+    - errname
+    - errorlint
+    - exhaustive
+#    - forbidigo
+    - gocognit
+    - goconst
+    - gocritic
+    - gocyclo
+    # gomoddirectives disabled below
+    # gomodguard disabled below
+    - goprintffuncname
+#    - gosec
+    - grouper
+    # importas disabled below
+    - makezero
+    - misspell
+    - nakedret
+    - nestif
+    - nilerr
+    - nilnil
+    - noctx
+    - nolintlint
+    - nosprintfhostport
+    - predeclared
+    - promlinter
+    - reassign
+    - rowserrcheck
+    - sqlclosecheck
+    - thelper
+    - tparallel
+    - unconvert
+    - unparam
+    - usestdlibvars
+    - wastedassign
+    - whitespace
+  disable:
+    - staticcheck
+    - unused
+    - ineffassign
+    - gomoddirectives
+    - gomodguard
+    - importas
+  settings:
+    cyclop:
+      max-complexity: 64
+    dupl:
+      threshold: 300
+    gocognit:
+      min-complexity: 100
+    nestif:
+      min-complexity: 32

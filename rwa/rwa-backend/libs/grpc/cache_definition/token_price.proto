@@ -1,0 +1,28 @@
+syntax = "proto3";
+option go_package = "../;cache_definition";
+
+message TokenPriceCacheBySymbol {
+  string symbol = 1;
+  string imageUrl = 2;
+  float currentPrice = 3;
+  float priceChangePercentage24H = 4;
+  int64 updateTime = 5;
+  string coinId = 6;
+  float high24h = 7;
+  float low24h = 8;
+}
+
+message TokenPriceCacheByAddress{
+  string symbol = 1;
+  string imageUrl = 2;
+  float currentPrice = 3;
+  float priceChangePercentage24H = 4;
+  int64 updateTime = 5;
+  uint64 chainId = 6;
+  string address = 7;
+  string coinId = 8;
+  float high24h = 9;
+  float low24h = 10;
+  uint64 decimals = 11;
+  string nativeTokenCoinId = 12;
+}

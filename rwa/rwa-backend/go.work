@@ -1,0 +1,18 @@
+go 1.25.1
+
+use (
+	./apps/alpaca-stream
+	./apps/api
+	./apps/indexer
+	./apps/ws-server
+	./libs/contracts
+	./libs/core
+	./libs/database
+	./libs/errors
+	./libs/grpc/cache_definition
+	./libs/grpc/indexer_grpc
+	./libs/grpc/tx_service
+	./libs/kafka
+	./libs/log
+	./libs/oss
+)

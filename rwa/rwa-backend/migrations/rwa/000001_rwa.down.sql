@@ -1,0 +1,9 @@
+-- Drop tables in reverse order of creation
+
+DROP TABLE IF EXISTS event_logs CASCADE;
+DROP TABLE IF EXISTS order_executions CASCADE;
+DROP TABLE IF EXISTS orders CASCADE;
+DROP TABLE IF EXISTS positions CASCADE;
+DROP TABLE IF EXISTS trading_accounts CASCADE;
+DROP TABLE IF EXISTS stocks CASCADE;
+DROP TABLE IF EXISTS account CASCADE;

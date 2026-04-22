@@ -1,0 +1,113 @@
+syntax = "proto3";
+import "common.proto";
+option go_package = "../;cache_definition";
+
+
+message InstrumentStateDetailsDot {
+  string instrumentAddr = 1;
+  string symbol = 2;
+  MarketInfo market = 3;
+  uint32 condition = 4;
+  InstrumentSetting setting = 5;
+  string spotPrice = 6;
+  repeated AMMState amms = 7;
+  TokenInfo base = 8;
+  TokenInfo quote = 9;
+  BlockInfoDto blockInfo = 10;
+  bool placePaused = 11;
+  uint32 fundingHour = 12;
+  bool disableOrderRebate = 13;
+  uint32 instrumentType = 14;
+  string marketType = 15;
+  string minTradeValue = 16;
+  string minOrderValue = 17;
+  string minRangeValue = 18;
+  TokenInfo displayBase = 19;
+  TokenInfo displayQuote = 20;
+  uint32 minTickDelta = 21;
+  uint64 index = 22;
+}
+
+message MarketInfo {
+  MarketInfoDetails info = 1;
+  MarketConfig config = 2;
+  MarketFeeder feeder = 3;
+}
+
+message MarketInfoDetails {
+  string addr = 1;
+  string type = 2;
+  string beacon = 3;
+}
+
+message MarketConfig {
+  uint32 dailyInterestRate = 1;
+  repeated FeederSource feederSource = 2;
+}
+
+message FeederSource {
+  string baseSymbol = 1;
+  string quoteSymbol = 2;
+  uint32 ftype = 3;
+  string aggregator0 = 4;
+  uint32 heartBeat0 = 5;
+  string aggregator1 = 6;
+  uint32 heartBeat1 = 7;
+}
+
+message MarketFeeder {
+  uint32 ftype = 1;
+  string scaler0 = 2;
+  string aggregator0 = 3;
+  uint32 heartBeat0 = 4;
+  string scaler1 = 5;
+  string aggregator1 = 6;
+  uint32 heartBeat1 = 7;
+}
+
+message TokenInfo {
+  string symbol = 1;
+  string address = 2;
+  uint32 decimals = 3;
+  string name = 4;
+}
+
+message AMMState {
+  uint32 expiry = 1;
+  uint32 timestamp = 2;
+  uint32 status = 3;
+  int64 tick = 4;
+  string sqrtPX96 = 5;
+  string liquidity = 6;
+  string totalLiquidity = 7;
+  string totalShort = 8;
+  string openInterests = 9;
+  string totalLong = 10;
+  string involvedFund = 11;
+  string feeIndex = 12;
+  string protocolFee = 13;
+  string longSocialLossIndex = 14;
+  string shortSocialLossIndex = 15;
+  string longFundingIndex = 16;
+  string shortFundingIndex = 17;
+  string insuranceFund = 18;
+  string settlementPrice = 19;
+  string instrumentAddr = 20;
+  string markPrice = 21;
+  BlockInfoDto blockInfo = 22;
+  string fairPrice = 23;
+}
+
+message InstrumentSetting {
+  uint32 initialMarginRatio = 1;
+  uint32 maintenanceMarginRatio = 2;
+  QuoteParam quoteParam = 3;
+}
+
+message QuoteParam {
+  string minMarginAmount = 1;
+  uint32 tradingFeeRatio = 2;
+  uint32 protocolFeeRatio = 3;
+  uint32 qtype = 4;
+  string tip = 5;
+}

@@ -1,0 +1,42 @@
+appName: "Alpaca WebSocket Service"
+
+alpaca:
+  api_key: "PKCO3XINYF5OEDNYX2QK76P7TL"
+  api_secret: "H7JJw42qDoA6H1ETGa8DtvzKi7esneM1iaykzG1tXGrm"
+  ws_url: "wss://paper-api.alpaca.markets/stream"  # For trade updates
+  ws_data_url: "wss://stream.data.alpaca.markets/v2/iex"  # For market data (bars, quotes, trades)
+
+rpcInfo:
+  97:
+    rpcUrl: "https://data-seed-prebsc-1-s1.binance.org:8545"
+    wssUrl: "wss://bsc-testnet-rpc.publicnode.com"
+    nativeTokenSymbol: "BNB"
+    nativeTokenDecimals: 18
+
+chain:
+  chainId: 97  # BSC Testnet
+  pocAddress: "0x0000000000000000000000000000000000000000"  # OrderContract proxy address (deploy后替换)
+
+backend:
+  privateKey: ""  # Backend wallet private key (BACKEND_ROLE on OrderContract)
+
+db:
+  host: "127.0.0.1"
+  port: 5432
+  username: "root"
+  password: "root"
+  database: "anchored"
+  maxIdleConns: 20
+  maxOpenConns: 200
+  logLevel: 2
+  sqlSlowThresholdMill: 10000
+  migrationPath: "file://migrations/rwa"
+  sslMode: "disable"
+
+logger:
+  level: "debug"
+  encoderType: "console"
+  outputType: "all"
+  maxAge: 30
+  enableColor: true
+

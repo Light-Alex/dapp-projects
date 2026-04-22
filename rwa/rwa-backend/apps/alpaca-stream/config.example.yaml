@@ -1,0 +1,76 @@
+# Alpaca WebSocket Streaming Service Configuration Example
+# Copy this file to config/config.yaml and fill in the actual values.
+
+# Application name, used for logging and service identification
+appName: "Alpaca WebSocket Service"
+
+# Alpaca WebSocket connection configuration
+alpaca:
+  # Alpaca API key (obtain from https://app.alpaca.markets)
+  api_key: "YOUR_ALPACA_API_KEY"
+  # Alpaca API secret
+  api_secret: "YOUR_ALPACA_API_SECRET"
+  # WebSocket URL for trade updates (paper: wss://paper-api.alpaca.markets/stream)
+  ws_url: "wss://paper-api.alpaca.markets/stream"
+  # WebSocket URL for market data - bars, quotes, trades (iex or sip)
+  ws_data_url: "wss://stream.data.alpaca.markets/v2/iex"
+
+# Database configuration (PostgreSQL)
+db:
+  host: "127.0.0.1"
+  port: 5432
+  username: "root"
+  password: "root"
+  database: "anchored"
+  # Maximum number of idle connections in the pool (default: 5)
+  maxIdleConns: 20
+  # Maximum number of open connections to the database (default: 50)
+  maxOpenConns: 200
+  # GORM log level: 1=Silent, 2=Error, 3=Warn, 4=Info (default: 2)
+  logLevel: 2
+  # Slow SQL threshold in milliseconds (default: 2000)
+  sqlSlowThresholdMill: 10000
+  # Database migration file path
+  migrationPath: "file://migrations/rwa"
+  # SSL mode: "disable", "enable", "require", "verify-ca", "verify-full"
+  sslMode: "disable"
+
+# RPC info mapping: chainId -> chain RPC configuration
+# Used for on-chain interactions via EVM clients
+rpcInfo:
+  # Chain ID as the key (97 for BSC Testnet)
+  97:
+    # HTTP RPC endpoint URL
+    rpcUrl: "https://data-seed-prebsc-1-s1.binance.org:8545"
+    # WebSocket RPC endpoint URL
+    wssUrl: "wss://bsc-testnet-rpc.publicnode.com"
+    # Native token symbol for this chain
+    nativeTokenSymbol: "BNB"
+    # Native token decimals
+    nativeTokenDecimals: 18
+
+# Blockchain configuration
+chain:
+  # Chain ID (97 for BSC Testnet)
+  chainId: 97
+  # OrderContract proxy address (replace after deployment)
+  pocAddress: "0x0000000000000000000000000000000000000000"
+
+# Backend wallet configuration
+backend:
+  # Private key for signing on-chain transactions (BACKEND_ROLE on OrderContract)
+  # WARNING: Use environment variables in production, never hardcode!
+  privateKey: ""
+
+# Logger configuration
+logger:
+  # Log level: "debug", "info", "warn", "error", "fatal" (default: "info")
+  level: "debug"
+  # Encoder type: "json" or "console" (default: "console")
+  encoderType: "console"
+  # Output type: "file", "stdout", or "all" (default: "stdout")
+  outputType: "all"
+  # Maximum age of log files in days (default: 30)
+  maxAge: 30
+  # Enable colored log output (default: false)
+  enableColor: true

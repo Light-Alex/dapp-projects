@@ -1,0 +1,18 @@
+syntax = "proto3";
+import "common.proto";
+option go_package = "../;cache_definition";
+
+message OrderBookCacheDto {
+  BlockInfoDto blockInfo = 1;
+  repeated OrderBookCacheDetailsDto bids = 2;
+  repeated OrderBookCacheDetailsDto asks = 3;
+}
+
+message OrderBookCacheDetailsDto {
+  int64 tick = 1;
+  string price = 2;
+  string baseSize = 3;
+  string quoteSize = 4;
+  string baseSum = 5;
+  string quoteSum = 6;
+}

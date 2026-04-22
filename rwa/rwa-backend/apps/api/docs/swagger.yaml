@@ -1,0 +1,629 @@
+definitions:
+  dto.AssetDTO:
+    properties:
+      attributes:
+        description: additional attributes
+        items:
+          type: string
+        type: array
+      class:
+        description: us_equity or crypto
+        type: string
+      easy_to_borrow:
+        description: whether the asset is easy to borrow
+        type: boolean
+      exchange:
+        description: exchange name
+        type: string
+      fractionable:
+        description: whether the asset is fractionable
+        type: boolean
+      id:
+        type: string
+      maintenance_margin_requirement:
+        description: maintenance margin requirement
+        type: integer
+      marginable:
+        description: whether the asset is marginable
+        type: boolean
+      name:
+        description: asset name
+        type: string
+      shortable:
+        description: whether the asset is shortable
+        type: boolean
+      status:
+        description: active or inactive
+        type: string
+      symbol:
+        description: asset symbol
+        type: string
+      tradable:
+        description: whether the asset is tradable
+        type: boolean
+    type: object
+  dto.BarDTO:
+    properties:
+      close:
+        type: number
+      high:
+        type: number
+      low:
+        type: number
+      open:
+        type: number
+      timestamp:
+        description: Unix timestamp in seconds
+        example: 1704067200
+        type: integer
+      trade_count:
+        type: integer
+      volume:
+        type: integer
+      vwap:
+        type: number
+    type: object
+  dto.GetAssetResponse:
+    properties:
+      asset:
+        $ref: '#/definitions/dto.AssetDTO'
+    type: object
+  dto.GetAssetsResponse:
+    properties:
+      assets:
+        items:
+          $ref: '#/definitions/dto.AssetDTO'
+        type: array
+    type: object
+  dto.GetCurrentPriceResponse:
+    properties:
+      price:
+        type: number
+      symbol:
+        type: string
+      timestamp:
+        description: Unix timestamp in seconds
+        example: 1704067200
+        type: integer
+      volume:
+        type: number
+    type: object
+  dto.GetHistoricalDataListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/dto.GetHistoricalDataResponse'
+        type: array
+      symbol:
+        type: string
+    type: object
+  dto.GetHistoricalDataResponse:
+    properties:
+      close:
+        type: number
+      high:
+        type: number
+      low:
+        type: number
+      open:
+        type: number
+      timestamp:
+        description: Unix timestamp in seconds
+        example: 1704067200
+        type: integer
+      volume:
+        type: integer
+    type: object
+  dto.GetLatestQuoteResponse:
+    properties:
+      quote:
+        $ref: '#/definitions/dto.QuoteDTO'
+    type: object
+  dto.GetMarketClockResponse:
+    properties:
+      is_open:
+        type: boolean
+      next_close:
+        description: Unix timestamp in seconds
+        example: 1704067200
+        type: integer
+      next_open:
+        description: Unix timestamp in seconds
+        example: 1704067200
+        type: integer
+      timestamp:
+        description: Unix timestamp in seconds
+        example: 1704067200
+        type: integer
+    type: object
+  dto.GetSnapshotResponse:
+    properties:
+      snapshot:
+        $ref: '#/definitions/dto.SnapshotData'
+    type: object
+  dto.GetStockListResponse:
+    properties:
+      list:
+        items:
+          $ref: '#/definitions/dto.StockInfo'
+        type: array
+    type: object
+  dto.QuoteDTO:
+    properties:
+      ask_exchange:
+        type: string
+      ask_price:
+        type: number
+      ask_size:
+        type: integer
+      bid_exchange:
+        type: string
+      bid_price:
+        type: number
+      bid_size:
+        type: integer
+      conditions:
+        items:
+          type: string
+        type: array
+      tape:
+        type: string
+      timestamp:
+        description: Unix timestamp in seconds
+        example: 1704067200
+        type: integer
+    type: object
+  dto.SnapshotData:
+    properties:
+      daily_bar:
+        $ref: '#/definitions/dto.BarDTO'
+      latest_quote:
+        $ref: '#/definitions/dto.QuoteDTO'
+      latest_trade:
+        $ref: '#/definitions/dto.TradeDTO'
+      minute_bar:
+        $ref: '#/definitions/dto.BarDTO'
+      prev_daily_bar:
+        $ref: '#/definitions/dto.BarDTO'
+      symbol:
+        type: string
+    type: object
+  dto.StockInfo:
+    properties:
+      about:
+        type: string
+      contract:
+        type: string
+      createdAt:
+        description: Unix timestamp in seconds
+        example: 1704067200
+        type: integer
+      exchange:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      status:
+        type: string
+      symbol:
+        type: string
+      updatedAt:
+        description: Unix timestamp in seconds
+        example: 1704067200
+        type: integer
+    type: object
+  dto.TradeDTO:
+    properties:
+      conditions:
+        items:
+          type: string
+        type: array
+      exchange:
+        type: string
+      id:
+        type: integer
+      price:
+        type: number
+      size:
+        type: integer
+      tape:
+        type: string
+      timestamp:
+        description: Unix timestamp in seconds
+        example: 1704067200
+        type: integer
+      update:
+        type: string
+    type: object
+  web.Response:
+    properties:
+      code:
+        type: integer
+      data: {}
+      msg:
+        type: string
+      requestId:
+        type: string
+    type: object
+info:
+  contact: {}
+  title: RWA API
+  version: "1.0"
+paths:
+  /common/health:
+    get:
+      description: HealthCheck
+      operationId: HealthCheck
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/web.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/web.Response'
+      summary: HealthCheck
+      tags:
+      - Common
+  /stock/detail:
+    get:
+      consumes:
+      - application/json
+      description: Get stock detail by symbol
+      parameters:
+      - description: Stock symbol
+        in: query
+        name: symbol
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/web.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.StockInfo'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/web.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/web.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/web.Response'
+      summary: Get Stock Detail
+      tags:
+      - Stock
+  /stock/list:
+    get:
+      consumes:
+      - application/json
+      description: Get list of active stocks (status = 'active')
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/web.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.GetStockListResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/web.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/web.Response'
+      summary: Get Stock List
+      tags:
+      - Stock
+  /trade/asset:
+    get:
+      consumes:
+      - application/json
+      description: Get a single asset information by symbol
+      parameters:
+      - description: Asset symbol
+        example: AAPL
+        in: query
+        name: symbol
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/web.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.GetAssetResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/web.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/web.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/web.Response'
+      summary: Get Asset
+      tags:
+      - Trade
+  /trade/assets:
+    get:
+      consumes:
+      - application/json
+      description: Get list of assets (stocks, crypto, etc.) with filtering options
+      parameters:
+      - description: Asset status filter (active or inactive)
+        example: active
+        in: query
+        name: status
+        type: string
+      - description: Asset class filter (us_equity or crypto)
+        example: us_equity
+        in: query
+        name: asset_class
+        type: string
+      - description: Exchange name filter
+        example: NASDAQ
+        in: query
+        name: exchange
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/web.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.GetAssetsResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/web.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/web.Response'
+      summary: Get Assets
+      tags:
+      - Trade
+  /trade/currentPrice:
+    get:
+      consumes:
+      - application/json
+      description: Get the current price for a given symbol
+      parameters:
+      - default: AAPL
+        description: Stock symbol
+        example: AAPL
+        in: query
+        name: symbol
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/web.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.GetCurrentPriceResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/web.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/web.Response'
+      summary: Get Current Price
+      tags:
+      - Trade
+  /trade/historicalData:
+    get:
+      consumes:
+      - application/json
+      description: Get historical price data for a given symbol
+      parameters:
+      - default: AAPL
+        description: Stock symbol
+        example: AAPL
+        in: query
+        name: symbol
+        required: true
+        type: string
+      - default: 1704067200
+        description: Start time as Unix timestamp in seconds
+        example: 1704067200
+        in: query
+        name: start_time
+        required: true
+        type: integer
+      - default: 1706745599
+        description: End time as Unix timestamp in seconds
+        example: 1706745599
+        in: query
+        name: end_time
+        required: true
+        type: integer
+      - default: 1d
+        description: 'Time interval. Short format: 1m, 5m, 15m, 1h, 1d, 1w. Full format:
+          1Min, 5Min, 15Min, 1Hour, 1Day, 1Week'
+        example: 1d
+        in: query
+        name: interval
+        required: true
+        type: string
+      - default: 100
+        description: Maximum number of records to return
+        example: 100
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/web.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.GetHistoricalDataListResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/web.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/web.Response'
+      summary: Get Historical Data
+      tags:
+      - Trade
+  /trade/latestQuote:
+    get:
+      consumes:
+      - application/json
+      description: Get the latest bid/ask quote for a given symbol
+      parameters:
+      - default: AAPL
+        description: Stock symbol
+        example: AAPL
+        in: query
+        name: symbol
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/web.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.GetLatestQuoteResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/web.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/web.Response'
+      summary: Get Latest Quote
+      tags:
+      - Trade
+  /trade/marketClock:
+    get:
+      consumes:
+      - application/json
+      description: Get the current market clock status including whether the market
+        is open and next open/close times
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/web.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.GetMarketClockResponse'
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/web.Response'
+      summary: Get Market Clock
+      tags:
+      - Trade
+  /trade/snapshot:
+    get:
+      consumes:
+      - application/json
+      description: Get comprehensive market snapshot for a given symbol including
+        latest trade, quote, and bar data
+      parameters:
+      - default: AAPL
+        description: Stock symbol
+        example: AAPL
+        in: query
+        name: symbol
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/web.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.GetSnapshotResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/web.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/web.Response'
+      summary: Get Snapshot
+      tags:
+      - Trade
+securityDefinitions:
+  ApiKeyAuth:
+    description: Rwa common-api
+    in: header
+    name: X-API-Key
+    type: apiKey
+swagger: "2.0"

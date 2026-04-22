@@ -1,0 +1,27 @@
+syntax = "proto3";
+import "common.proto";
+option go_package = "../;cache_definition";
+
+message OrderBookOrDepthDto {
+  LiquidityAmmDto amm = 1;
+  repeated int64 tids = 2;
+  repeated MinimalPearlDto pearls = 3;
+  BlockInfoDto blockInfo = 4;
+  int64 tickDelta = 5;
+  int64 size = 6;
+  int32 length = 7;
+  int64 stepRatio = 8;
+  map<int64, MinimalPearlDto> tick2Pearl = 9;
+  bool isInverse = 10;
+}
+
+message LiquidityAmmDto {
+  string sqrtPX96 = 1;
+  int64 tick = 2;
+  string liquidity = 3;
+}
+
+message MinimalPearlDto {
+  string liquidityNet = 1;
+  string left = 2;
+}

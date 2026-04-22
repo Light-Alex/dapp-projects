@@ -1,0 +1,226 @@
+syntax = "proto3";
+option go_package = "../;indexer_grpc_client";
+package indexer.grpc;
+
+service IndexerService {
+  rpc GetTradeVolume(GetTradeVolumeRequest) returns (GetTradeVolumeResponse);
+  rpc GetDepositWithdrawHistory(GteDepositWithdrawHistoryRequest) returns (GetDepositWithdrawHistoryResponse);
+  rpc GetUserInstrumentTransferHistory(GteUserOperationCommonHistoryRequest) returns (GetUserInstrumentTransferHistoryResponse);
+  rpc GetUserFundingHistory(GteUserOperationCommonHistoryRequest) returns (GetUserFundingHistoryResponse);
+  rpc GetUserLiquidityHistory(GteUserOperationCommonHistoryRequest) returns (GetUserLiquidityHistoryResponse);
+  rpc GetUserOrderHistory(GteUserOperationCommonHistoryRequest) returns (GetUserOrderHistoryResponse);
+  rpc GetUserTradeHistory(GteUserOperationCommonHistoryRequest) returns (GetUserTradeHistoryResponse);
+}
+
+message GetUserTradeHistoryResponse {
+  repeated GetUserTradeHistoryResponseDetails list = 1;
+  uint32 totalCount = 2;
+}
+
+message GetUserTradeHistoryResponseDetails{
+  string id = 1;
+  string instrumentAddress = 2;
+  uint32 expiry = 3;
+  string size = 4;
+  string balance = 5;
+  string price = 6;
+  string tradeFee = 7;
+  string protocolFee = 8;
+  uint64 timestamp = 9;
+  string txHash = 10;
+  UserTradeHistoryType type = 11;
+  string symbol = 12;
+  TokenInfo baseToken = 13;
+  TokenInfo quoteToken = 14;
+  string typeString = 15;
+  string side = 16;
+}
+
+enum UserTradeHistoryType{
+  FILL_TRADE = 0;
+  LIMIT_TRADE = 1;
+  MARKET_TRADE = 2;
+  SWEEP_TRADE = 3;
+}
+
+
+message GetUserOrderHistoryResponse {
+  repeated GetUserOrderHistoryResponseDetails list = 1;
+  uint32 totalCount = 2;
+}
+
+message GetUserOrderHistoryResponseDetails{
+  string id = 1;
+  string instrumentAddress = 2;
+  uint32 expiry = 3;
+  uint64 placeTimestamp = 4;
+  string placeTxHash = 5;
+  string size = 7;
+  string balance = 8;
+  string takenSize = 9;
+  string takenBalance = 10;
+  string orderPrice = 11;
+  string feeRebate = 12;
+  UserOrderHistoryStatus type = 6;
+  uint64 cancelTimestamp = 13;
+  string cancelTxHash = 14;
+  uint64 fillTimestamp = 15;
+  string fillTxHash = 16;
+  string symbol = 17;
+  TokenInfo baseToken = 18;
+  TokenInfo quoteToken = 19;
+  string typeString = 20;
+  string side = 21;
+}
+
+enum UserOrderHistoryStatus{
+  CANCELED_ORDER = 0;
+  FILLED_ORDER = 1;
+}
+
+message GetUserLiquidityHistoryResponse {
+  repeated GetUserLiquidityHistoryResponseDetails list = 1;
+  uint32 totalCount = 2;
+}
+
+message GetUserLiquidityHistoryResponseDetails{
+  string id = 1;
+  string instrumentAddress = 2;
+  uint32 expiry = 3;
+  uint64 timestamp = 4;
+  string txHash = 5;
+  UserLiquidityHistoryType type = 6;
+  int64 lowerTick = 7;
+  int64 upperTick = 8;
+  string lowerPrice = 9;
+  string upperPrice = 10;
+  string fairPrice = 11;
+  string amount = 12;
+  string feeEarned = 13;
+  string symbol = 14;
+  TokenInfo baseToken = 15;
+  TokenInfo quoteToken = 16;
+  string typeString = 17;
+}
+
+enum UserLiquidityHistoryType{
+  ADD_LIQUIDITY = 0;
+  REMOVE_LIQUIDITY = 1;
+}
+
+message GetUserFundingHistoryResponse {
+  repeated GetUserFundingHistoryResponseDetails list = 1;
+  uint32 totalCount = 2;
+}
+
+message GetUserFundingHistoryResponseDetails{
+  string id = 1;
+  string instrumentAddress = 2;
+  uint32 expiry = 3;
+  string value = 4;
+  string valueUsd = 5;
+  uint64 timestamp = 6;
+  string txHash = 7;
+  GetUserFundingType type = 8;
+  string symbol = 9;
+  TokenInfo baseToken = 10;
+  TokenInfo quoteToken = 11;
+  string typeString = 12;
+}
+
+enum GetUserFundingType{
+  FUNDING_PAID = 0;
+  FUNDING_RECEIVED = 1;
+}
+
+message GteUserOperationCommonHistoryRequest {
+  string userAddress = 1;
+  int64 startTimestamp = 2;
+  int64 endTimestamp = 3;
+  uint32 page = 4;
+  uint32 size = 5;
+  optional string instrumentAddress = 6;
+  optional uint32 expiry = 7;
+}
+
+message GetUserInstrumentTransferHistoryResponse {
+  repeated GetUserInstrumentTransferHistoryResponseDetails list = 1;
+  uint32 totalCount = 2;
+}
+
+message GetUserInstrumentTransferHistoryResponseDetails{
+  string id = 1;
+  string instrumentAddress = 2;
+  uint32 expiry = 3;
+  string value = 4;
+  string valueUsd = 5;
+  uint64 timestamp = 6;
+  string txHash = 7;
+  GetUserInstrumentTransferHistoryType type = 8;
+  string symbol = 9;
+  TokenInfo baseToken = 10;
+  TokenInfo quoteToken = 11;
+  string typeString = 12;
+}
+
+enum GetUserInstrumentTransferHistoryType{
+  SCATTER = 0;
+  GATHER = 1;
+}
+
+message GetTradeVolumeRequest {
+  string userAddress = 1;
+}
+
+message GetTradeVolumeResponse {
+  string totalVolumeUsd = 1;
+  repeated GetTradeVolumeResponseDetails details = 2;
+  string userAddress = 3;
+}
+
+message GetTradeVolumeResponseDetails{
+  string instrumentAddress = 1;
+  uint32 expiry = 2;
+  string quoteAddress = 3;
+  string volumeUsd = 4;
+  string quoteVolume = 5;
+  TokenInfo baseToken = 6;
+  TokenInfo quoteToken = 7;
+  string symbol = 8;
+}
+
+message GteDepositWithdrawHistoryRequest {
+  string userAddress = 1;
+  int64 startTimestamp = 2;
+  int64 endTimestamp = 3;
+  uint32 size = 4;
+  uint32 page = 5;
+}
+
+message GetDepositWithdrawHistoryResponse {
+  repeated GetDepositWithdrawHistoryResponseDetails list = 1;
+  uint32 totalCount = 2;
+}
+
+message GetDepositWithdrawHistoryResponseDetails {
+  string id = 1;
+  string tokenAddress = 2;
+  uint64 timestamp = 3;
+  string value = 4;
+  string valueUsd = 5;
+  string txHash = 6;
+  DepositWithdrawType type = 7;
+  TokenInfo tokenInfo = 8;
+  string typeString = 9;
+}
+enum DepositWithdrawType {
+  DEPOSIT = 0;
+  WITHDRAW = 1;
+}
+
+message TokenInfo {
+  string address = 1;
+  string symbol = 2;
+  uint64 decimals = 3;
+  string image = 4;
+}

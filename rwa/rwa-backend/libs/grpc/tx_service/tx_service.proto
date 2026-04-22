@@ -1,0 +1,129 @@
+syntax = "proto3";
+option go_package = "../;tx_service";
+package tx_service;
+
+// Transaction service for managing wallets and transactions
+service TxService {
+  // Register a new wallet
+  rpc RegisterWallet(RegisterWalletRequest) returns (RegisterWalletResponse);
+  
+  // Update nonces from chain for all wallets
+  rpc UpdateNoncesFromChain(UpdateNoncesFromChainRequest) returns (UpdateNoncesFromChainResponse);
+  
+  // Send a transaction
+  rpc SendTransaction(SendTransactionRequest) returns (SendTransactionResponse);
+  
+  // Get transaction by hash or request ID
+  rpc GetTransaction(GetTransactionRequest) returns (GetTransactionResponse);
+}
+
+// Wallet types
+enum WalletType {
+  WALLET_TYPE_UNSPECIFIED = 0;
+  WALLET_TYPE_BACKEND_BOT = 1;
+  WALLET_TYPE_FRONTEND_USER = 2;
+}
+
+// Transaction status
+enum TransactionStatus {
+  TRANSACTION_STATUS_UNSPECIFIED = 0;
+  TRANSACTION_STATUS_PENDING = 1;
+  TRANSACTION_STATUS_CONFIRMED = 2;
+  TRANSACTION_STATUS_FAILED = 3;
+}
+
+// Wallet message
+message Wallet {
+  uint64 id = 1;
+  string address = 2;
+  string private_key = 3;
+  WalletType wallet_type = 4;
+  uint64 nonce = 5;
+  uint64 chain_id = 6;
+  int64 created_at = 7;
+  int64 updated_at = 8;
+}
+
+// Transaction message
+message Transaction {
+  uint64 id = 1;
+  uint64 wallet_id = 2;
+  string request_id = 3;
+  uint64 chain_id = 4;
+  string tx_hash = 5;
+  string from_address = 6;
+  string to_address = 7;
+  string value = 8;
+  uint64 gas_limit = 9;
+  string gas_price = 10;
+  string calldata = 11;
+  uint64 nonce = 12;
+  TransactionStatus status = 13;
+  optional uint64 block_number = 14;
+  string receipt = 15;
+  int64 created_at = 16;
+  int64 updated_at = 17;
+  Wallet wallet = 18;
+}
+
+// Register wallet request
+message RegisterWalletRequest {
+  string address = 1;
+  string private_key = 2;
+  WalletType wallet_type = 3;
+  uint64 chain_id = 4;
+}
+
+// Register wallet response
+message RegisterWalletResponse {
+  bool success = 1;
+  string message = 2;
+  Wallet wallet = 3;
+}
+
+// Update nonces from chain request
+message UpdateNoncesFromChainRequest {
+  int32 max_concurrency = 1; // Maximum number of concurrent requests (default: 10)
+}
+
+// Update nonces from chain response
+message UpdateNoncesFromChainResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+
+// Send transaction request
+message SendTransactionRequest {
+  string request_id = 1; // Optional, will be generated if not provided
+  string wallet_address = 2;
+  string to = 3;
+  string value = 4;
+  string calldata = 5;
+  string gas_limit = 6;
+  string gas_price = 7;
+  uint64 chain_id = 8;
+}
+
+// Send transaction response
+message SendTransactionResponse {
+  bool success = 1;
+  string message = 2;
+  Transaction transaction = 3;
+}
+
+// Get transaction request - supports query by tx_hash or request_id
+message GetTransactionRequest {
+  oneof query {
+    string tx_hash = 1;
+    string request_id = 2;
+  }
+}
+
+// Get transaction response
+message GetTransactionResponse {
+  bool success = 1;
+  string message = 2;
+  Transaction transaction = 3;
+}
+
