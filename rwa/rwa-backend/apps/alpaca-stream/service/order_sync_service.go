@@ -14,8 +14,8 @@ import (
 	"github.com/AnchoredLabs/rwa-backend/apps/alpaca-stream/handlers"
 	contractRwa "github.com/AnchoredLabs/rwa-backend/libs/contracts/rwa"
 	"github.com/AnchoredLabs/rwa-backend/libs/core/evm_helper"
-	"github.com/AnchoredLabs/rwa-backend/libs/core/models/rwa"
 	"github.com/AnchoredLabs/rwa-backend/libs/core/kafka_help"
+	"github.com/AnchoredLabs/rwa-backend/libs/core/models/rwa"
 	"github.com/AnchoredLabs/rwa-backend/libs/log"
 	"github.com/acmestack/gorm-plus/gplus"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -28,11 +28,11 @@ import (
 
 // OrderSyncService handles the business logic for trade update events from Alpaca.
 type OrderSyncService struct {
-	db              *gorm.DB
-	evmClient       *evm_helper.EvmClient
-	conf            *config.Config
-	privateKey      *ecdsa.PrivateKey
-	orderUpdatePub  *kafka_help.OrderUpdateKafkaService
+	db             *gorm.DB
+	evmClient      *evm_helper.EvmClient
+	conf           *config.Config
+	privateKey     *ecdsa.PrivateKey
+	orderUpdatePub *kafka_help.OrderUpdateKafkaService
 }
 
 // NewOrderSyncService creates a new OrderSyncService.
@@ -58,6 +58,29 @@ func NewOrderSyncService(db *gorm.DB, evmClient *evm_helper.EvmClient, conf *con
 }
 
 // HandleNew updates the order status to accepted when Alpaca acknowledges the order.
+//
+//	{
+//	  "stream": "trade_updates",
+//	  "data": {
+//	    "event": "new",
+//	    "execution_id": "c81ce296-5i6b-4k73-9625-4526d5219001",
+//	    "timestamp": "2026-05-03T14:30:00.234567Z",
+//	    "order": {
+//	      "id": "c81ce296-5i6b-4k73-9625-4526d5219002",
+//	      "client_order_id": "my-client-id-123",
+//	      "status": "new",
+//	      "symbol": "AAPL",
+//	      "qty": "100",
+//	      "filled_qty": "0",
+//	      "filled_avg_price": "",
+//	      "side": "buy",
+//	      "type": "limit",
+//	      "time_in_force": "day",
+//	      "limit_price": "150.25",
+//	      "stop_price": ""
+//	    }
+//	  }
+//	}
 func (s *OrderSyncService) HandleNew(ctx context.Context, data handlers.TradeUpdateMessageData) {
 	clientOrderID, err := extractClientOrderID(data)
 	if err != nil {
@@ -106,11 +129,63 @@ func (s *OrderSyncService) HandleNew(ctx context.Context, data handlers.TradeUpd
 }
 
 // HandleFill processes a full fill event from Alpaca.
+//
+//	{
+//	  "stream": "trade_updates",
+//	  "data": {
+//	    "event": "fill",
+//	    "execution_id": "c81ce296-5i6b-4k73-9625-4526d5219004",
+//	    "timestamp": "2026-05-03T14:30:08.456789Z",
+//	    "price": "150.22",
+//	    "qty": "50",
+//	    "position_qty": "100",
+//	    "order": {
+//	      "id": "c81ce296-5i6b-4k73-9625-4526d5219002",
+//	      "client_order_id": "my-client-id-123",
+//	      "status": "filled",
+//	      "symbol": "AAPL",
+//	      "qty": "100",
+//	      "filled_qty": "100",
+//	      "filled_avg_price": "150.21",
+//	      "side": "buy",
+//	      "type": "limit",
+//	      "time_in_force": "day",
+//	      "limit_price": "150.25",
+//	      "stop_price": ""
+//	    }
+//	  }
+//	}
 func (s *OrderSyncService) HandleFill(ctx context.Context, data handlers.TradeUpdateMessageData) {
 	s.handleFillOrPartialFill(ctx, data, true)
 }
 
 // HandlePartialFill processes a partial fill event from Alpaca.
+//
+//	{
+//	  "stream": "trade_updates",
+//	  "data": {
+//	    "event": "partial_fill",
+//	    "execution_id": "c81ce296-5i6b-4k73-9625-4526d5219003",
+//	    "timestamp": "2026-05-03T14:30:05.345678Z",
+//	    "price": "150.20",
+//	    "qty": "50",
+//	    "position_qty": "50",
+//	    "order": {
+//	      "id": "c81ce296-5i6b-4k73-9625-4526d5219002",
+//	      "client_order_id": "my-client-id-123",
+//	      "status": "partially_filled",
+//	      "symbol": "AAPL",
+//	      "qty": "100",
+//	      "filled_qty": "50",
+//	      "filled_avg_price": "150.20",
+//	      "side": "buy",
+//	      "type": "limit",
+//	      "time_in_force": "day",
+//	      "limit_price": "150.25",
+//	      "stop_price": ""
+//	    }
+//	  }
+//	}
 func (s *OrderSyncService) HandlePartialFill(ctx context.Context, data handlers.TradeUpdateMessageData) {
 	s.handleFillOrPartialFill(ctx, data, false)
 }
@@ -284,6 +359,29 @@ func (s *OrderSyncService) handleFillOrPartialFill(ctx context.Context, data han
 }
 
 // HandleCanceled updates the order status to cancelled.
+//
+//	{
+//	  "stream": "trade_updates",
+//	  "data": {
+//	    "event": "canceled",
+//	    "execution_id": "c81ce296-5i6b-4k73-9625-4526d5219005",
+//	    "timestamp": "2026-05-03T14:25:00.567890Z",
+//	    "order": {
+//	      "id": "c81ce296-5i6b-4k73-9625-4526d5219006",
+//	      "client_order_id": "my-client-id-456",
+//	      "status": "canceled",
+//	      "symbol": "TSLA",
+//	      "qty": "50",
+//	      "filled_qty": "0",
+//	      "filled_avg_price": "",
+//	      "side": "sell",
+//	      "type": "market",
+//	      "time_in_force": "day",
+//	      "limit_price": "",
+//	      "stop_price": ""
+//	    }
+//	  }
+//	}
 func (s *OrderSyncService) HandleCanceled(ctx context.Context, data handlers.TradeUpdateMessageData) {
 	s.handleTerminalState(ctx, data, rwa.OrderStatusCancelled, "cancelled", func(order *rwa.Order) {
 		order.CancelledAt = parseTimestampOrNow(data.Timestamp)
@@ -291,6 +389,30 @@ func (s *OrderSyncService) HandleCanceled(ctx context.Context, data handlers.Tra
 }
 
 // HandleRejected updates the order status to rejected with a reason.
+//
+//	{
+//	  "stream": "trade_updates",
+//	  "data": {
+//	    "event": "rejected",
+//	    "execution_id": "c81ce296-5i6b-4k73-9625-4526d5219007",
+//	    "timestamp": "2026-05-03T14:20:00.678901Z",
+//	    "order": {
+//	      "id": "",
+//	      "client_order_id": "my-client-id-789",
+//	      "status": "rejected",
+//	      "symbol": "INVALID",
+//	      "qty": "1000",
+//	      "filled_qty": "0",
+//	      "filled_avg_price": "",
+//	      "side": "buy",
+//	      "type": "limit",
+//	      "time_in_force": "day",
+//	      "limit_price": "100.00",
+//	      "stop_price": "",
+//	      "reject_reason": "Insufficient buying power"
+//	    }
+//	  }
+//	}
 func (s *OrderSyncService) HandleRejected(ctx context.Context, data handlers.TradeUpdateMessageData) {
 	clientOrderID, err := extractClientOrderID(data)
 	if err != nil {
@@ -355,6 +477,29 @@ func (s *OrderSyncService) HandleRejected(ctx context.Context, data handlers.Tra
 // HandleDoneForDay 处理 done_for_day 事件。
 // GTC 订单每天收盘时会收到此事件，表示当天交易结束但订单仍有效。
 // 不修改订单状态，只记录日志。
+//
+//	{
+//	  "stream": "trade_updates",
+//	  "data": {
+//	    "event": "done_for_day",
+//	    "execution_id": "c81ce296-5i6b-4k73-9625-4526d5219008",
+//	    "timestamp": "2026-05-03T20:00:00.789012Z",
+//	    "order": {
+//	      "id": "c81ce296-5i6b-4k73-9625-4526d5219009",
+//	      "client_order_id": "my-client-id-gtc",
+//	      "status": "done_for_day",
+//	      "symbol": "AAPL",
+//	      "qty": "100",
+//	      "filled_qty": "30",
+//	      "filled_avg_price": "150.15",
+//	      "side": "buy",
+//	      "type": "limit",
+//	      "time_in_force": "gtc",
+//	      "limit_price": "150.00",
+//	      "stop_price": ""
+//	    }
+//	  }
+//	}
 func (s *OrderSyncService) HandleDoneForDay(ctx context.Context, data handlers.TradeUpdateMessageData) {
 	clientOrderID, err := extractClientOrderID(data)
 	if err != nil {
@@ -378,6 +523,29 @@ func (s *OrderSyncService) HandleDoneForDay(ctx context.Context, data handlers.T
 }
 
 // HandleExpired updates the order status to expired.
+//
+//	{
+//	  "stream": "trade_updates",
+//	  "data": {
+//	    "event": "expired",
+//	    "execution_id": "c81ce296-5i6b-4k73-9625-4526d5219010",
+//	    "timestamp": "2026-05-03T16:00:00.890123Z",
+//	    "order": {
+//	      "id": "c81ce296-5i6b-4k73-9625-4526d5219011",
+//	      "client_order_id": "my-client-id-day",
+//	      "status": "expired",
+//	      "symbol": "MSFT",
+//	      "qty": "200",
+//	      "filled_qty": "0",
+//	      "filled_avg_price": "",
+//	      "side": "sell",
+//	      "type": "limit",
+//	      "time_in_force": "day",
+//	      "limit_price": "400.00",
+//	      "stop_price": ""
+//	    }
+//	  }
+//	}
 func (s *OrderSyncService) HandleExpired(ctx context.Context, data handlers.TradeUpdateMessageData) {
 	s.handleTerminalState(ctx, data, rwa.OrderStatusExpired, "expired", func(order *rwa.Order) {
 		order.ExpiredAt = parseTimestampOrNow(data.Timestamp)

@@ -32,6 +32,7 @@ var (
 // OrderContractOrder is an auto generated low-level Go binding around an user-defined struct.
 type OrderContractOrder struct {
 	Id          *big.Int
+	OrderNumber *big.Int
 	User        common.Address
 	Symbol      string
 	Qty         *big.Int
@@ -46,7 +47,7 @@ type OrderContractOrder struct {
 
 // OrderMetaData contains all meta data concerning the Order contract.
 var OrderMetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"constructor\",\"inputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"BACKEND_ROLE\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"DEFAULT_ADMIN_ROLE\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"USDM\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIPocToken\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"accountOrderSeq\",\"inputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"cancelOrder\",\"inputs\":[{\"name\":\"orderId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"cancelOrderIntent\",\"inputs\":[{\"name\":\"orderId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"getOrder\",\"inputs\":[{\"name\":\"orderId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structOrderContract.Order\",\"components\":[{\"name\":\"id\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"user\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"symbol\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"qty\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"escrowAsset\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"price\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"side\",\"type\":\"uint8\",\"internalType\":\"enumOrderContract.Side\"},{\"name\":\"orderType\",\"type\":\"uint8\",\"internalType\":\"enumOrderContract.OrderType\"},{\"name\":\"status\",\"type\":\"uint8\",\"internalType\":\"enumOrderContract.Status\"},{\"name\":\"tif\",\"type\":\"uint8\",\"internalType\":\"enumOrderContract.TimeInForce\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getOrderNumber\",\"inputs\":[{\"name\":\"orderId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"pure\"},{\"type\":\"function\",\"name\":\"getRoleAdmin\",\"inputs\":[{\"name\":\"role\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getRoleMember\",\"inputs\":[{\"name\":\"role\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"index\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getRoleMemberCount\",\"inputs\":[{\"name\":\"role\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getRoleMembers\",\"inputs\":[{\"name\":\"role\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"grantRole\",\"inputs\":[{\"name\":\"role\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"account\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"hasRole\",\"inputs\":[{\"name\":\"role\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"account\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"initialize\",\"inputs\":[{\"name\":\"usdm_\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"admin_\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"backend_\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"markExecuted\",\"inputs\":[{\"name\":\"orderId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"refundAmount\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"orders\",\"inputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"id\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"user\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"symbol\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"qty\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"escrowAsset\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"price\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"side\",\"type\":\"uint8\",\"internalType\":\"enumOrderContract.Side\"},{\"name\":\"orderType\",\"type\":\"uint8\",\"internalType\":\"enumOrderContract.OrderType\"},{\"name\":\"status\",\"type\":\"uint8\",\"internalType\":\"enumOrderContract.Status\"},{\"name\":\"tif\",\"type\":\"uint8\",\"internalType\":\"enumOrderContract.TimeInForce\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"renounceRole\",\"inputs\":[{\"name\":\"role\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"callerConfirmation\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"revokeRole\",\"inputs\":[{\"name\":\"role\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"account\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setBackend\",\"inputs\":[{\"name\":\"backend\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setSymbolToken\",\"inputs\":[{\"name\":\"symbol\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"submitOrder\",\"inputs\":[{\"name\":\"symbol\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"qty\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"price\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"side\",\"type\":\"uint8\",\"internalType\":\"enumOrderContract.Side\"},{\"name\":\"orderType\",\"type\":\"uint8\",\"internalType\":\"enumOrderContract.OrderType\"},{\"name\":\"tif\",\"type\":\"uint8\",\"internalType\":\"enumOrderContract.TimeInForce\"}],\"outputs\":[{\"name\":\"orderId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"supportsInterface\",\"inputs\":[{\"name\":\"interfaceId\",\"type\":\"bytes4\",\"internalType\":\"bytes4\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"symbolToToken\",\"inputs\":[{\"name\":\"\",\"type\":\"string\",\"internalType\":\"string\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIPocToken\"}],\"stateMutability\":\"view\"},{\"type\":\"event\",\"name\":\"CancelRequested\",\"inputs\":[{\"name\":\"user\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"orderId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"blockTimestamp\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"Initialized\",\"inputs\":[{\"name\":\"version\",\"type\":\"uint64\",\"indexed\":false,\"internalType\":\"uint64\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"OrderCancelled\",\"inputs\":[{\"name\":\"orderId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"user\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"asset\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"refundAmount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"side\",\"type\":\"uint8\",\"indexed\":false,\"internalType\":\"enumOrderContract.Side\"},{\"name\":\"orderType\",\"type\":\"uint8\",\"indexed\":false,\"internalType\":\"enumOrderContract.OrderType\"},{\"name\":\"tif\",\"type\":\"uint8\",\"indexed\":false,\"internalType\":\"enumOrderContract.TimeInForce\"},{\"name\":\"previousStatus\",\"type\":\"uint8\",\"indexed\":false,\"internalType\":\"enumOrderContract.Status\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"OrderExecuted\",\"inputs\":[{\"name\":\"orderId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"refundAmount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"tif\",\"type\":\"uint8\",\"indexed\":false,\"internalType\":\"enumOrderContract.TimeInForce\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"OrderSubmitted\",\"inputs\":[{\"name\":\"user\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"orderId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"symbol\",\"type\":\"string\",\"indexed\":false,\"internalType\":\"string\"},{\"name\":\"qty\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"price\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"side\",\"type\":\"uint8\",\"indexed\":false,\"internalType\":\"enumOrderContract.Side\"},{\"name\":\"orderType\",\"type\":\"uint8\",\"indexed\":false,\"internalType\":\"enumOrderContract.OrderType\"},{\"name\":\"tif\",\"type\":\"uint8\",\"indexed\":false,\"internalType\":\"enumOrderContract.TimeInForce\"},{\"name\":\"blockTimestamp\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"RoleAdminChanged\",\"inputs\":[{\"name\":\"role\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"},{\"name\":\"previousAdminRole\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"},{\"name\":\"newAdminRole\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"RoleGranted\",\"inputs\":[{\"name\":\"role\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"},{\"name\":\"account\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"sender\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"RoleRevoked\",\"inputs\":[{\"name\":\"role\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"},{\"name\":\"account\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"sender\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"AccessControlBadConfirmation\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"AccessControlUnauthorizedAccount\",\"inputs\":[{\"name\":\"account\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"neededRole\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"AlreadyCancelled\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"AlreadyExecuted\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"AmountZero\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidInitialization\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidStatus\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"NotCancelRequested\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"NotFound\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"NotInitializing\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"NotOwner\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"ReentrancyGuardReentrantCall\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"ZeroAddress\",\"inputs\":[]}]",
+	ABI: "[{\"type\":\"constructor\",\"inputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"BACKEND_ROLE\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"DEFAULT_ADMIN_ROLE\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"USDM\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIPocToken\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"accountOrderSeq\",\"inputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"cancelOrder\",\"inputs\":[{\"name\":\"orderId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"cancelOrderIntent\",\"inputs\":[{\"name\":\"orderId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"getOrder\",\"inputs\":[{\"name\":\"orderId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structOrderContract.Order\",\"components\":[{\"name\":\"id\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"orderNumber\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"user\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"symbol\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"qty\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"escrowAsset\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"price\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"side\",\"type\":\"uint8\",\"internalType\":\"enumOrderContract.Side\"},{\"name\":\"orderType\",\"type\":\"uint8\",\"internalType\":\"enumOrderContract.OrderType\"},{\"name\":\"status\",\"type\":\"uint8\",\"internalType\":\"enumOrderContract.Status\"},{\"name\":\"tif\",\"type\":\"uint8\",\"internalType\":\"enumOrderContract.TimeInForce\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getOrderNumber\",\"inputs\":[{\"name\":\"orderId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getRoleAdmin\",\"inputs\":[{\"name\":\"role\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getRoleMember\",\"inputs\":[{\"name\":\"role\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"index\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getRoleMemberCount\",\"inputs\":[{\"name\":\"role\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getRoleMembers\",\"inputs\":[{\"name\":\"role\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"grantRole\",\"inputs\":[{\"name\":\"role\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"account\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"hasRole\",\"inputs\":[{\"name\":\"role\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"account\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"initialize\",\"inputs\":[{\"name\":\"usdm_\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"admin_\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"backend_\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"markExecuted\",\"inputs\":[{\"name\":\"orderId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"refundAmount\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"nextOrderId\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"orders\",\"inputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"id\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"orderNumber\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"user\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"symbol\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"qty\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"escrowAsset\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"price\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"side\",\"type\":\"uint8\",\"internalType\":\"enumOrderContract.Side\"},{\"name\":\"orderType\",\"type\":\"uint8\",\"internalType\":\"enumOrderContract.OrderType\"},{\"name\":\"status\",\"type\":\"uint8\",\"internalType\":\"enumOrderContract.Status\"},{\"name\":\"tif\",\"type\":\"uint8\",\"internalType\":\"enumOrderContract.TimeInForce\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"renounceRole\",\"inputs\":[{\"name\":\"role\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"callerConfirmation\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"revokeRole\",\"inputs\":[{\"name\":\"role\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"account\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setBackend\",\"inputs\":[{\"name\":\"backend\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setSymbolToken\",\"inputs\":[{\"name\":\"symbol\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"submitOrder\",\"inputs\":[{\"name\":\"symbol\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"qty\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"price\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"side\",\"type\":\"uint8\",\"internalType\":\"enumOrderContract.Side\"},{\"name\":\"orderType\",\"type\":\"uint8\",\"internalType\":\"enumOrderContract.OrderType\"},{\"name\":\"tif\",\"type\":\"uint8\",\"internalType\":\"enumOrderContract.TimeInForce\"}],\"outputs\":[{\"name\":\"orderId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"supportsInterface\",\"inputs\":[{\"name\":\"interfaceId\",\"type\":\"bytes4\",\"internalType\":\"bytes4\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"symbolToToken\",\"inputs\":[{\"name\":\"\",\"type\":\"string\",\"internalType\":\"string\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIPocToken\"}],\"stateMutability\":\"view\"},{\"type\":\"event\",\"name\":\"CancelRequested\",\"inputs\":[{\"name\":\"user\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"orderId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"blockTimestamp\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"Initialized\",\"inputs\":[{\"name\":\"version\",\"type\":\"uint64\",\"indexed\":false,\"internalType\":\"uint64\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"OrderCancelled\",\"inputs\":[{\"name\":\"orderId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"user\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"asset\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"refundAmount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"side\",\"type\":\"uint8\",\"indexed\":false,\"internalType\":\"enumOrderContract.Side\"},{\"name\":\"orderType\",\"type\":\"uint8\",\"indexed\":false,\"internalType\":\"enumOrderContract.OrderType\"},{\"name\":\"tif\",\"type\":\"uint8\",\"indexed\":false,\"internalType\":\"enumOrderContract.TimeInForce\"},{\"name\":\"previousStatus\",\"type\":\"uint8\",\"indexed\":false,\"internalType\":\"enumOrderContract.Status\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"OrderExecuted\",\"inputs\":[{\"name\":\"orderId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"user\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"refundAmount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"tif\",\"type\":\"uint8\",\"indexed\":false,\"internalType\":\"enumOrderContract.TimeInForce\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"OrderSubmitted\",\"inputs\":[{\"name\":\"user\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"orderId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"symbol\",\"type\":\"string\",\"indexed\":false,\"internalType\":\"string\"},{\"name\":\"qty\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"price\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"side\",\"type\":\"uint8\",\"indexed\":false,\"internalType\":\"enumOrderContract.Side\"},{\"name\":\"orderType\",\"type\":\"uint8\",\"indexed\":false,\"internalType\":\"enumOrderContract.OrderType\"},{\"name\":\"tif\",\"type\":\"uint8\",\"indexed\":false,\"internalType\":\"enumOrderContract.TimeInForce\"},{\"name\":\"blockTimestamp\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"RoleAdminChanged\",\"inputs\":[{\"name\":\"role\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"},{\"name\":\"previousAdminRole\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"},{\"name\":\"newAdminRole\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"RoleGranted\",\"inputs\":[{\"name\":\"role\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"},{\"name\":\"account\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"sender\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"RoleRevoked\",\"inputs\":[{\"name\":\"role\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"},{\"name\":\"account\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"sender\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"AccessControlBadConfirmation\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"AccessControlUnauthorizedAccount\",\"inputs\":[{\"name\":\"account\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"neededRole\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"AlreadyCancelled\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"AlreadyExecuted\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"AmountZero\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidInitialization\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidStatus\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"NotCancelRequested\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"NotFound\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"NotInitializing\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"NotOwner\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"ReentrancyGuardReentrantCall\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"ZeroAddress\",\"inputs\":[]}]",
 }
 
 // OrderABI is the input ABI used to generate the binding from.
@@ -321,7 +322,7 @@ func (_Order *OrderCallerSession) AccountOrderSeq(arg0 common.Address) (*big.Int
 
 // GetOrder is a free data retrieval call binding the contract method 0xd09ef241.
 //
-// Solidity: function getOrder(uint256 orderId) view returns((uint256,address,string,uint256,address,uint256,uint256,uint8,uint8,uint8,uint8))
+// Solidity: function getOrder(uint256 orderId) view returns((uint256,uint256,address,string,uint256,address,uint256,uint256,uint8,uint8,uint8,uint8))
 func (_Order *OrderCaller) GetOrder(opts *bind.CallOpts, orderId *big.Int) (OrderContractOrder, error) {
 	var out []interface{}
 	err := _Order.contract.Call(opts, &out, "getOrder", orderId)
@@ -338,21 +339,21 @@ func (_Order *OrderCaller) GetOrder(opts *bind.CallOpts, orderId *big.Int) (Orde
 
 // GetOrder is a free data retrieval call binding the contract method 0xd09ef241.
 //
-// Solidity: function getOrder(uint256 orderId) view returns((uint256,address,string,uint256,address,uint256,uint256,uint8,uint8,uint8,uint8))
+// Solidity: function getOrder(uint256 orderId) view returns((uint256,uint256,address,string,uint256,address,uint256,uint256,uint8,uint8,uint8,uint8))
 func (_Order *OrderSession) GetOrder(orderId *big.Int) (OrderContractOrder, error) {
 	return _Order.Contract.GetOrder(&_Order.CallOpts, orderId)
 }
 
 // GetOrder is a free data retrieval call binding the contract method 0xd09ef241.
 //
-// Solidity: function getOrder(uint256 orderId) view returns((uint256,address,string,uint256,address,uint256,uint256,uint8,uint8,uint8,uint8))
+// Solidity: function getOrder(uint256 orderId) view returns((uint256,uint256,address,string,uint256,address,uint256,uint256,uint8,uint8,uint8,uint8))
 func (_Order *OrderCallerSession) GetOrder(orderId *big.Int) (OrderContractOrder, error) {
 	return _Order.Contract.GetOrder(&_Order.CallOpts, orderId)
 }
 
 // GetOrderNumber is a free data retrieval call binding the contract method 0x517627a2.
 //
-// Solidity: function getOrderNumber(uint256 orderId) pure returns(uint256)
+// Solidity: function getOrderNumber(uint256 orderId) view returns(uint256)
 func (_Order *OrderCaller) GetOrderNumber(opts *bind.CallOpts, orderId *big.Int) (*big.Int, error) {
 	var out []interface{}
 	err := _Order.contract.Call(opts, &out, "getOrderNumber", orderId)
@@ -369,14 +370,14 @@ func (_Order *OrderCaller) GetOrderNumber(opts *bind.CallOpts, orderId *big.Int)
 
 // GetOrderNumber is a free data retrieval call binding the contract method 0x517627a2.
 //
-// Solidity: function getOrderNumber(uint256 orderId) pure returns(uint256)
+// Solidity: function getOrderNumber(uint256 orderId) view returns(uint256)
 func (_Order *OrderSession) GetOrderNumber(orderId *big.Int) (*big.Int, error) {
 	return _Order.Contract.GetOrderNumber(&_Order.CallOpts, orderId)
 }
 
 // GetOrderNumber is a free data retrieval call binding the contract method 0x517627a2.
 //
-// Solidity: function getOrderNumber(uint256 orderId) pure returns(uint256)
+// Solidity: function getOrderNumber(uint256 orderId) view returns(uint256)
 func (_Order *OrderCallerSession) GetOrderNumber(orderId *big.Int) (*big.Int, error) {
 	return _Order.Contract.GetOrderNumber(&_Order.CallOpts, orderId)
 }
@@ -536,11 +537,43 @@ func (_Order *OrderCallerSession) HasRole(role [32]byte, account common.Address)
 	return _Order.Contract.HasRole(&_Order.CallOpts, role, account)
 }
 
+// NextOrderId is a free data retrieval call binding the contract method 0x2a58b330.
+//
+// Solidity: function nextOrderId() view returns(uint256)
+func (_Order *OrderCaller) NextOrderId(opts *bind.CallOpts) (*big.Int, error) {
+	var out []interface{}
+	err := _Order.contract.Call(opts, &out, "nextOrderId")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+// NextOrderId is a free data retrieval call binding the contract method 0x2a58b330.
+//
+// Solidity: function nextOrderId() view returns(uint256)
+func (_Order *OrderSession) NextOrderId() (*big.Int, error) {
+	return _Order.Contract.NextOrderId(&_Order.CallOpts)
+}
+
+// NextOrderId is a free data retrieval call binding the contract method 0x2a58b330.
+//
+// Solidity: function nextOrderId() view returns(uint256)
+func (_Order *OrderCallerSession) NextOrderId() (*big.Int, error) {
+	return _Order.Contract.NextOrderId(&_Order.CallOpts)
+}
+
 // Orders is a free data retrieval call binding the contract method 0xa85c38ef.
 //
-// Solidity: function orders(uint256 ) view returns(uint256 id, address user, string symbol, uint256 qty, address escrowAsset, uint256 amount, uint256 price, uint8 side, uint8 orderType, uint8 status, uint8 tif)
+// Solidity: function orders(uint256 ) view returns(uint256 id, uint256 orderNumber, address user, string symbol, uint256 qty, address escrowAsset, uint256 amount, uint256 price, uint8 side, uint8 orderType, uint8 status, uint8 tif)
 func (_Order *OrderCaller) Orders(opts *bind.CallOpts, arg0 *big.Int) (struct {
 	Id          *big.Int
+	OrderNumber *big.Int
 	User        common.Address
 	Symbol      string
 	Qty         *big.Int
@@ -557,6 +590,7 @@ func (_Order *OrderCaller) Orders(opts *bind.CallOpts, arg0 *big.Int) (struct {
 
 	outstruct := new(struct {
 		Id          *big.Int
+		OrderNumber *big.Int
 		User        common.Address
 		Symbol      string
 		Qty         *big.Int
@@ -573,16 +607,17 @@ func (_Order *OrderCaller) Orders(opts *bind.CallOpts, arg0 *big.Int) (struct {
 	}
 
 	outstruct.Id = *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
-	outstruct.User = *abi.ConvertType(out[1], new(common.Address)).(*common.Address)
-	outstruct.Symbol = *abi.ConvertType(out[2], new(string)).(*string)
-	outstruct.Qty = *abi.ConvertType(out[3], new(*big.Int)).(**big.Int)
-	outstruct.EscrowAsset = *abi.ConvertType(out[4], new(common.Address)).(*common.Address)
-	outstruct.Amount = *abi.ConvertType(out[5], new(*big.Int)).(**big.Int)
-	outstruct.Price = *abi.ConvertType(out[6], new(*big.Int)).(**big.Int)
-	outstruct.Side = *abi.ConvertType(out[7], new(uint8)).(*uint8)
-	outstruct.OrderType = *abi.ConvertType(out[8], new(uint8)).(*uint8)
-	outstruct.Status = *abi.ConvertType(out[9], new(uint8)).(*uint8)
-	outstruct.Tif = *abi.ConvertType(out[10], new(uint8)).(*uint8)
+	outstruct.OrderNumber = *abi.ConvertType(out[1], new(*big.Int)).(**big.Int)
+	outstruct.User = *abi.ConvertType(out[2], new(common.Address)).(*common.Address)
+	outstruct.Symbol = *abi.ConvertType(out[3], new(string)).(*string)
+	outstruct.Qty = *abi.ConvertType(out[4], new(*big.Int)).(**big.Int)
+	outstruct.EscrowAsset = *abi.ConvertType(out[5], new(common.Address)).(*common.Address)
+	outstruct.Amount = *abi.ConvertType(out[6], new(*big.Int)).(**big.Int)
+	outstruct.Price = *abi.ConvertType(out[7], new(*big.Int)).(**big.Int)
+	outstruct.Side = *abi.ConvertType(out[8], new(uint8)).(*uint8)
+	outstruct.OrderType = *abi.ConvertType(out[9], new(uint8)).(*uint8)
+	outstruct.Status = *abi.ConvertType(out[10], new(uint8)).(*uint8)
+	outstruct.Tif = *abi.ConvertType(out[11], new(uint8)).(*uint8)
 
 	return *outstruct, err
 
@@ -590,9 +625,10 @@ func (_Order *OrderCaller) Orders(opts *bind.CallOpts, arg0 *big.Int) (struct {
 
 // Orders is a free data retrieval call binding the contract method 0xa85c38ef.
 //
-// Solidity: function orders(uint256 ) view returns(uint256 id, address user, string symbol, uint256 qty, address escrowAsset, uint256 amount, uint256 price, uint8 side, uint8 orderType, uint8 status, uint8 tif)
+// Solidity: function orders(uint256 ) view returns(uint256 id, uint256 orderNumber, address user, string symbol, uint256 qty, address escrowAsset, uint256 amount, uint256 price, uint8 side, uint8 orderType, uint8 status, uint8 tif)
 func (_Order *OrderSession) Orders(arg0 *big.Int) (struct {
 	Id          *big.Int
+	OrderNumber *big.Int
 	User        common.Address
 	Symbol      string
 	Qty         *big.Int
@@ -609,9 +645,10 @@ func (_Order *OrderSession) Orders(arg0 *big.Int) (struct {
 
 // Orders is a free data retrieval call binding the contract method 0xa85c38ef.
 //
-// Solidity: function orders(uint256 ) view returns(uint256 id, address user, string symbol, uint256 qty, address escrowAsset, uint256 amount, uint256 price, uint8 side, uint8 orderType, uint8 status, uint8 tif)
+// Solidity: function orders(uint256 ) view returns(uint256 id, uint256 orderNumber, address user, string symbol, uint256 qty, address escrowAsset, uint256 amount, uint256 price, uint8 side, uint8 orderType, uint8 status, uint8 tif)
 func (_Order *OrderCallerSession) Orders(arg0 *big.Int) (struct {
 	Id          *big.Int
+	OrderNumber *big.Int
 	User        common.Address
 	Symbol      string
 	Qty         *big.Int
@@ -1415,39 +1452,48 @@ func (it *OrderOrderExecutedIterator) Close() error {
 // OrderOrderExecuted represents a OrderExecuted event raised by the Order contract.
 type OrderOrderExecuted struct {
 	OrderId      *big.Int
+	User         common.Address
 	RefundAmount *big.Int
 	Tif          uint8
 	Raw          types.Log // Blockchain specific contextual infos
 }
 
-// FilterOrderExecuted is a free log retrieval operation binding the contract event 0xc12f92cbba8a6bc549f0a1c14d4fc0e716850e8ce0b8371d61247ea355f5ea38.
+// FilterOrderExecuted is a free log retrieval operation binding the contract event 0x60269b84d5dc1353aca157ab4cdab7ca9cabb31233d688fd030c9445798d1e67.
 //
-// Solidity: event OrderExecuted(uint256 indexed orderId, uint256 refundAmount, uint8 tif)
-func (_Order *OrderFilterer) FilterOrderExecuted(opts *bind.FilterOpts, orderId []*big.Int) (*OrderOrderExecutedIterator, error) {
+// Solidity: event OrderExecuted(uint256 indexed orderId, address indexed user, uint256 refundAmount, uint8 tif)
+func (_Order *OrderFilterer) FilterOrderExecuted(opts *bind.FilterOpts, orderId []*big.Int, user []common.Address) (*OrderOrderExecutedIterator, error) {
 
 	var orderIdRule []interface{}
 	for _, orderIdItem := range orderId {
 		orderIdRule = append(orderIdRule, orderIdItem)
 	}
+	var userRule []interface{}
+	for _, userItem := range user {
+		userRule = append(userRule, userItem)
+	}
 
-	logs, sub, err := _Order.contract.FilterLogs(opts, "OrderExecuted", orderIdRule)
+	logs, sub, err := _Order.contract.FilterLogs(opts, "OrderExecuted", orderIdRule, userRule)
 	if err != nil {
 		return nil, err
 	}
 	return &OrderOrderExecutedIterator{contract: _Order.contract, event: "OrderExecuted", logs: logs, sub: sub}, nil
 }
 
-// WatchOrderExecuted is a free log subscription operation binding the contract event 0xc12f92cbba8a6bc549f0a1c14d4fc0e716850e8ce0b8371d61247ea355f5ea38.
+// WatchOrderExecuted is a free log subscription operation binding the contract event 0x60269b84d5dc1353aca157ab4cdab7ca9cabb31233d688fd030c9445798d1e67.
 //
-// Solidity: event OrderExecuted(uint256 indexed orderId, uint256 refundAmount, uint8 tif)
-func (_Order *OrderFilterer) WatchOrderExecuted(opts *bind.WatchOpts, sink chan<- *OrderOrderExecuted, orderId []*big.Int) (event.Subscription, error) {
+// Solidity: event OrderExecuted(uint256 indexed orderId, address indexed user, uint256 refundAmount, uint8 tif)
+func (_Order *OrderFilterer) WatchOrderExecuted(opts *bind.WatchOpts, sink chan<- *OrderOrderExecuted, orderId []*big.Int, user []common.Address) (event.Subscription, error) {
 
 	var orderIdRule []interface{}
 	for _, orderIdItem := range orderId {
 		orderIdRule = append(orderIdRule, orderIdItem)
 	}
+	var userRule []interface{}
+	for _, userItem := range user {
+		userRule = append(userRule, userItem)
+	}
 
-	logs, sub, err := _Order.contract.WatchLogs(opts, "OrderExecuted", orderIdRule)
+	logs, sub, err := _Order.contract.WatchLogs(opts, "OrderExecuted", orderIdRule, userRule)
 	if err != nil {
 		return nil, err
 	}
@@ -1479,9 +1525,9 @@ func (_Order *OrderFilterer) WatchOrderExecuted(opts *bind.WatchOpts, sink chan<
 	}), nil
 }
 
-// ParseOrderExecuted is a log parse operation binding the contract event 0xc12f92cbba8a6bc549f0a1c14d4fc0e716850e8ce0b8371d61247ea355f5ea38.
+// ParseOrderExecuted is a log parse operation binding the contract event 0x60269b84d5dc1353aca157ab4cdab7ca9cabb31233d688fd030c9445798d1e67.
 //
-// Solidity: event OrderExecuted(uint256 indexed orderId, uint256 refundAmount, uint8 tif)
+// Solidity: event OrderExecuted(uint256 indexed orderId, address indexed user, uint256 refundAmount, uint8 tif)
 func (_Order *OrderFilterer) ParseOrderExecuted(log types.Log) (*OrderOrderExecuted, error) {
 	event := new(OrderOrderExecuted)
 	if err := _Order.contract.UnpackLog(event, "OrderExecuted", log); err != nil {

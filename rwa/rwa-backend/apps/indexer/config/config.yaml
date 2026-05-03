@@ -22,7 +22,7 @@ db:
   maxOpenConns: 200
   logLevel: 2
   sqlSlowThresholdMill: 10000
-  migrationPath: "file://migrations/rwa"
+  migrationPath: "file://../../migrations/rwa"
   sslMode: "disable"
 
 logger:
@@ -38,12 +38,12 @@ backend:
 alpaca:
   api_key: "PKCO3XINYF5OEDNYX2QK76P7TL"
   api_secret: "H7JJw42qDoA6H1ETGa8DtvzKi7esneM1iaykzG1tXGrm"
-  base_url: "https://paper-api.alpaca.markets"
-  data_url: "https://data.alpaca.markets"
+  base_url: "https://paper-api.alpaca.markets"    # Alpaca 交易 API (paper trading 模拟环境)
+  data_url: "https://data.alpaca.markets"          # Alpaca 数据 API (历史/实时行情)
 
 indexer:
   pollInterval: 3
-  batchSize: 100
+  batchSize: 10
   startBlock: 0
   confirmationBlocks: 0
 

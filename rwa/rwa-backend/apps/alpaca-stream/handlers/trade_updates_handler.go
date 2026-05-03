@@ -91,7 +91,24 @@ func (h *TradeUpdatesHandler) SetAdvancedEventHandlers(
 	h.onReplaceRejected = onReplaceRejected
 }
 
-// Handle handles a trade update message
+// Handle 处理 trade_updates 流的消息，根据事件类型分发到对应的处理函数
+//
+// 订单生命周期事件：
+//   - pending_new:      新订单待交易所确认，触发 onPendingNew
+//   - new:              订单已被交易所接收，触发 onNew
+//   - rejected:         订单被拒绝（如资金不足），触发 onRejected
+//   - partial_fill:     订单部分成交，触发 onPartialFill
+//   - fill:             订单完全成交，触发 onFill
+//   - pending_cancel:   取消请求待确认，触发 onPendingCancel
+//   - cancel_rejected:  取消请求被拒绝，触发 onCancelRejected
+//   - canceled:         订单已取消，触发 onCanceled
+//   - pending_replace:  修改请求待确认，触发 onPendingReplace
+//   - replace_rejected: 修改请求被拒绝，触发 onReplaceRejected
+//   - replaced:         订单被修改替换，触发 onReplaced
+//   - expired:          订单已过期，触发 onExpired
+//   - done_for_day:     当日交易结束，触发 onDoneForDay
+//
+// 未知事件类型会记录警告日志但不会返回错误
 func (h *TradeUpdatesHandler) Handle(ctx context.Context, message json.RawMessage) error {
 	var msg TradeUpdateMessage
 	if err := json.Unmarshal(message, &msg); err != nil {

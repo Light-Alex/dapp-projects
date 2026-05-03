@@ -9,55 +9,55 @@
 ```mermaid
 graph TB
     subgraph POC合约体系
-        MockUSDC["MockUSDC<br/>(测试用 USDC, 6 decimals)"]
-        USDM["PocToken - USDM<br/>(ERC20 + RBAC, 18 decimals)"]
-        SymbolToken["PocToken - 股票代币<br/>(如 AAPL Token)"]
-        PocGate["PocGate<br/>(充值/提现网关)"]
-        OrderContract["OrderContract<br/>(订单管理)"]
+        MockUSDC["MockUSDC: 测试用USDC 6位精度"]
+        USDM["PocToken-USDM: ERC20+RBAC 18位精度"]
+        SymbolToken["PocToken-股票代币: 如AAPL Token"]
+        PocGate["PocGate: 充值/提现网关"]
+        OrderContract["OrderContract: 订单管理"]
 
         User((用户))
 
-        User -->|"1. approve USDC"| MockUSDC
-        User -->|"2. deposit()"| PocGate
-        PocGate -->|"transferFrom USDC"| MockUSDC
-        PocGate -->|"mint USDM"| USDM
+        User -->|1.approve USDC| MockUSDC
+        User -->|2.deposit| PocGate
+        PocGate -->|transferFrom USDC| MockUSDC
+        PocGate -->|mint USDM| USDM
 
-        User -->|"3. approve USDM/股票代币"| USDM
-        User -->|"4. submitOrder()"| OrderContract
-        OrderContract -->|"transferFrom 托管资产"| USDM
-        OrderContract -->|"transferFrom 托管资产"| SymbolToken
+        User -->|3.approve USDM/股票代币| USDM
+        User -->|4.submitOrder| OrderContract
+        OrderContract -->|transferFrom托管资产| USDM
+        OrderContract -->|transferFrom托管资产| SymbolToken
 
         Backend((后端))
-        Backend -->|"markExecuted()"| OrderContract
-        Backend -->|"cancelOrder()"| OrderContract
-        Backend -->|"mint 股票代币"| SymbolToken
+        Backend -->|markExecuted| OrderContract
+        Backend -->|cancelOrder| OrderContract
+        Backend -->|mint股票代币| SymbolToken
     end
 
     subgraph 生产级合约体系
-        USDC_Prod["USDC<br/>(真实 USDC)"]
-        AncUSDC["ancUSDC<br/>(锚定 USDC 代币)"]
-        PendingAncUSDC["PendingAncUSDC<br/>(待处理 ancUSDC)"]
-        PendingUSDC_Token["PendingUSDC<br/>(待处理 USDC)"]
-        Gate["Gate<br/>(生产级网关)"]
+        USDC_Prod["USDC: 真实USDC"]
+        AncUSDC["ancUSDC: 锚定USDC代币"]
+        PendingAncUSDC["PendingAncUSDC: 待处理ancUSDC"]
+        PendingUSDC_Token["PendingUSDC: 待处理USDC"]
+        Gate["Gate: 生产级网关"]
 
         User2((用户))
         Processor((处理器/后端))
 
-        User2 -->|"deposit()"| Gate
-        Gate -->|"transferFrom USDC"| USDC_Prod
-        Gate -->|"mint"| PendingAncUSDC
+        User2 -->|deposit| Gate
+        Gate -->|transferFrom USDC| USDC_Prod
+        Gate -->|mint| PendingAncUSDC
 
-        User2 -->|"withdraw()"| Gate
-        Gate -->|"burn ancUSDC"| AncUSDC
-        Gate -->|"mint"| PendingUSDC_Token
+        User2 -->|withdraw| Gate
+        Gate -->|burn ancUSDC| AncUSDC
+        Gate -->|mint| PendingUSDC_Token
 
-        Processor -->|"processDeposit()"| Gate
-        Gate -->|"burn pendingAncUSDC"| PendingAncUSDC
-        Gate -->|"mint ancUSDC"| AncUSDC
+        Processor -->|processDeposit| Gate
+        Gate -->|burn pendingAncUSDC| PendingAncUSDC
+        Gate -->|mint ancUSDC| AncUSDC
 
-        Processor -->|"processWithdrawal()"| Gate
-        Gate -->|"burn pendingUSDC"| PendingUSDC_Token
-        Gate -->|"transfer USDC"| USDC_Prod
+        Processor -->|processWithdrawal| Gate
+        Gate -->|burn pendingUSDC| PendingUSDC_Token
+        Gate -->|transfer USDC| USDC_Prod
     end
 ```
 
@@ -78,6 +78,19 @@ OrderContract 是核心订单管理合约，负责订单提交、资金托管、
 | `Status` | `Pending(0)`, `Executed(1)`, `CancelRequested(2)`, `Cancelled(3)` | 订单状态 |
 | `TimeInForce` | `DAY(0)`, `GTC(1)`, `OPG(2)`, `IOC(3)`, `FOK(4)`, `GTX(5)`, `GTD(6)`, `CLS(7)` | 订单有效期策略 |
 
+**TimeInForce 有效期策略说明**：
+
+| 值 | 枚举 | 全称 | 说明 |
+|----|------|------|------|
+| 0 | `DAY` | Day Order | 当日有效。订单在当前交易日结束时自动过期，未成交部分自动取消。适用于日内交易策略。 |
+| 1 | `GTC` | Good-Till-Cancelled | 撤销前有效。订单持续有效直到被手动取消或成交完成。适合长期挂单，但需注意避免遗忘订单。 |
+| 2 | `OPG` | At-the-Opening | 开盘有效。订单仅在市场开盘时参与集合竞价，若开盘未能成交则自动取消。用于捕捉开盘价格波动。 |
+| 3 | `IOC` | Immediate-or-Cancel | 立即成交否则取消。订单提交后必须立即成交可成交的部分，未成交部分立即取消，不会挂单等待。适合要求快速成交的场景。 |
+| 4 | `FOK` | Fill-or-Kill | 全部成交否则取消。订单必须一次性全部成交，若无法完全满足则整笔订单取消。适合大额交易，避免部分成交带来的滑点风险。 |
+| 5 | `GTX` | Good-Till-Crossing | 撤销前有效（仅限被动单）。订单只能作为 Maker 挂单，不会立即与现有订单撮合，确保不会产生 Taker 成交。适合希望赚取 Maker 返佣的策略。 |
+| 6 | `GTD` | Good-Till-Date | 有效期至指定日期。订单持续有效直到指定的到期时间，到期后自动取消。兼具 GTC 的持续性和 DAY 的自动过期特性。 |
+| 7 | `CLS` | Closing | 收盘有效。订单仅在临近收盘时参与交易，用于在收盘阶段执行交易策略。 |
+
 #### 2.1.2 状态转换图
 
 ```mermaid
@@ -91,6 +104,25 @@ stateDiagram-v2
     Executed --> [*]
     Cancelled --> [*]
 ```
+
+**状态转换说明**：
+
+订单从创建到终态共有 4 个状态和 2 个终态：
+
+| 转换路径 | 触发函数 | 执行者 | 说明 |
+|----------|----------|--------|------|
+| `[*] → Pending` | `submitOrder()` | 用户 | 用户提交订单并托管资金，订单进入待处理状态 |
+| `Pending → Executed` | `markExecuted()` | 后端（BACKEND_ROLE） | 后端确认订单已在 Alpaca 成交，可退还多余托管资金 |
+| `Pending → CancelRequested` | `cancelOrderIntent()` | 订单所有者 | 用户主动发起取消意图，但需后端最终确认 |
+| `Pending → Cancelled` | `cancelOrder()` | 后端（BACKEND_ROLE） | 后端直接取消未成交订单，退还全部托管资金 |
+| `CancelRequested → Cancelled` | `cancelOrder()` | 后端（BACKEND_ROLE） | 后端确认用户取消请求，执行退款 |
+| `CancelRequested → Executed` | `markExecuted()` | 后端（BACKEND_ROLE） | 用户请求取消时订单已在 Alpaca 成交，此时以执行结果为准 |
+
+**关键设计要点**：
+
+- **双路径取消**：用户无法直接取消订单，必须通过 `cancelOrderIntent` 表达意图，由后端最终执行 `cancelOrder`。这确保后端在链下有足够时间处理与 Alpaca 的交互，避免链上取消与链下执行产生冲突。
+- **CancelRequested 竞态处理**：当用户发起取消后，后端仍可能调用 `markExecuted` 将订单标记为已成交（因为 Alpaca 侧可能已执行）。此时成交结果优先，用户的取消请求被覆盖，后端通过 `refundAmount` 退还多余资金。
+- **终态不可逆**：`Executed` 和 `Cancelled` 为终态，进入后不可再转换。同一订单的 `markExecuted` 和 `cancelOrder` 互斥，只能调用其中之一。
 
 #### 2.1.3 存储结构
 
@@ -110,6 +142,15 @@ struct Order {
     TimeInForce tif;      // 有效期策略
 }
 ```
+
+**`escrowAsset` 与 `amount` 说明**：
+
+`submitOrder` 时，合约通过 `transferFrom` 将用户钱包中 `amount` 数量的 `escrowAsset` 代币转入合约自身保管（即"托管"）。订单成交或取消后，由后端决定如何分配这些托管代币（mint 对应资产给用户、退还多余部分等）。
+
+| 字段 | Buy（买入） | Sell（卖出） |
+|------|------------|-------------|
+| `escrowAsset` | USDM 地址 | 对应股票 PocToken 地址（如 ancAAPL） |
+| `amount` | `price * qty / 1e18`（购买所需的 USDM 总额） | `qty`（卖出的股票数量） |
 
 **订单号编码规则**：`AAAAAABBSSSSSSSSSS`
 - `AAAAAA`（6位）：用户地址的 keccak256 哈希取模 1,000,000
@@ -185,6 +226,148 @@ PocToken 是基于 ERC20 标准的代币合约，增加了基于角色的 mint/b
 - **Beacon Proxy 模式**：构造函数接收 `gateContract_` 地址，通过 `_disableInitializers()` 禁止直接初始化实现合约
 - **RBAC 控制**：mint 和 burn 操作均受角色约束，防止未授权操作
 - **灵活命名**：通过覆盖 `name()` 和 `symbol()` 函数，支持在 proxy 部署后自定义名称
+
+#### 2.2.4 生产级架构：Gate、PocToken、Beacon Proxy 关系
+
+GATE_CONTRACT 和 PocToken 的关系是工厂模式下的创建者标识：
+
+设计意图：在生产级架构中，Gate 合约是 PocToken 的工厂——由 Gate 动态创建和管理所有 PocToken 实例。GATE_CONTRACT 记录的是"谁创建了我"，用于：
+
+1. 溯源：任何 PocToken 实例都可以通过 GATE_CONTRACT 找到创建它的 Gate 合约
+2. 权限预留：生产级版本可能允许 GATE_CONTRACT 绕过 RBAC 直接执行 mint/burn（因为 Gate 是代币的合法管理者）
+3. Beacon Proxy 下的实例区分：所有 PocToken 共享同一个实现合约，GATE_CONTRACT 作为 immutable 在每个代理的创建时写入 bytecode，是区分不同实例身份的唯一不可变标记
+
+当前 POC 阶段的简化：部署脚本中直接用 deployer 地址作为占位传入（而不是真正的 Gate 地址），因为 POC 阶段由部署脚本手动创建所有 PocToken 实例，尚未实现 Gate 工厂动态创建的功能。
+
+| 阶段 | GATE_CONTRACT 值 | 谁创建 PocToken |
+|------|------------------|-----------------|
+| 当前 POC | deployer（占位） | 部署脚本手动创建 |
+| 生产级目标 | Gate 合约地址 | Gate 合约动态创建并管理 |
+
+**合约关系图**：
+
+```mermaid
+graph TB
+    subgraph deploy["部署阶段"]
+        Admin["管理员"]
+        PocTokenImpl["PocToken 实现合约"]
+        Beacon["UpgradeableBeacon"]
+    end
+
+    subgraph gate_factory["Gate工厂"]
+        Gate["Gate: 充值提现网关 + 代币工厂"]
+    end
+
+    subgraph tokens["PocToken实例群"]
+        USDM["USDM BeaconProxy"]
+        AncAAPL["ancAAPL BeaconProxy"]
+        AncTSLA["ancTSLA BeaconProxy"]
+        AncNVDA["ancNVDA BeaconProxy"]
+        NewToken["ancXXX BeaconProxy - 动态创建"]
+    end
+
+    USDC["USDC 外部代币"]
+    User["用户"]
+
+    Admin -->|"① 部署"| PocTokenImpl
+    Admin -->|"② 创建 Beacon"| Beacon
+    PocTokenImpl -.->|"Beacon 指向"| Beacon
+    Admin -->|"③ 部署"| Gate
+
+    Gate -->|"④ createToken 部署 BeaconProxy"| USDM
+    Gate -->|"④ createToken"| AncAAPL
+    Gate -->|"④ createToken"| AncTSLA
+    Gate -->|"④ createToken"| AncNVDA
+    Gate -->|"动态创建新资产"| NewToken
+
+    USDM -.->|"代理到实现合约"| PocTokenImpl
+    AncAAPL -.->|"代理到实现合约"| PocTokenImpl
+    AncTSLA -.->|"代理到实现合约"| PocTokenImpl
+    AncNVDA -.->|"代理到实现合约"| PocTokenImpl
+    NewToken -.->|"代理到实现合约"| PocTokenImpl
+    Beacon -.->|"所有代理共享"| PocTokenImpl
+
+    Gate -->|"MINTER/BURNER"| USDM
+    Gate -->|"MINTER/BURNER"| AncAAPL
+    Gate -->|"MINTER/BURNER"| AncNVDA
+```
+
+**数据流：新资产上架**：
+
+```mermaid
+sequenceDiagram
+    participant Admin as 管理员
+    participant Gate as Gate 合约
+    participant Beacon as UpgradeableBeacon
+    participant Proxy as 新 BeaconProxy
+    participant PocToken as PocToken 实现
+
+    Admin->>Gate: createToken("NVDA.anc", "NVDA.anc")
+    Gate->>Gate: 检查调用者权限 (CONFIGURE_ROLE)
+    Gate->>Proxy: new BeaconProxy(beacon, initData)
+    Note over Proxy: initData = initialize("NVDA.anc", "NVDA.anc")
+    Proxy->>PocToken: delegatecall initialize()
+    Note over PocToken: 授予 Gate: ADMIN + MINTER + BURNER
+    Note over Proxy: GATE_CONTRACT = Gate (immutable)
+    Gate-->>Admin: 返回新代币地址
+    Gate->>Gate: 记录 symbolToToken("NVDA") = Proxy地址
+```
+
+**数据流：用户充值（含 pending）**：
+
+```mermaid
+sequenceDiagram
+    participant User as 用户
+    participant Gate as Gate 合约
+    participant USDC as USDC
+    participant PendingAncUSDC as PendingAncUSDC
+    participant AncUSDC as ancUSDC
+    participant Backend as 后端
+
+    Note over User,Backend: 阶段① 用户发起充值
+    User->>USDC: approve(Gate, usdcAmount)
+    User->>Gate: deposit(usdcAmount)
+    Gate->>Gate: 校验金额 >= minimumDepositAmount
+    Gate->>USDC: safeTransferFrom(user, Gate, usdcAmount)
+    Gate->>PendingAncUSDC: mint(user, pendingAncUSDCAmount)
+    Note over Gate: 记录 DepositOperation (PENDING)
+    Gate-->>User: emit PendingDeposit(operationId, user, usdcAmount, pendingAncUSDCAmount)
+
+    Note over User,Backend: 阶段② 后端确认充值
+    Backend->>Gate: processDeposit(operationId, ancUSDCAmount)
+    Gate->>PendingAncUSDC: burnFrom(user, pendingAncUSDCAmount)
+    Gate->>AncUSDC: mint(user, ancUSDCAmount)
+    Note over Gate: 状态 PENDING → ACTIVE
+    Gate-->>User: emit DepositProcessed(operationId, user, ancUSDCAmount)
+```
+
+**数据流：用户提现（含 pending）**：
+
+```mermaid
+sequenceDiagram
+    participant User as 用户
+    participant Gate as Gate 合约
+    participant AncUSDC as ancUSDC
+    participant PendingUSDC as PendingUSDC
+    participant USDC as USDC
+    participant Backend as 后端
+
+    Note over User,Backend: 阶段① 用户发起提现
+    User->>Gate: withdraw(ancUSDCAmount)
+    Gate->>Gate: 校验金额 >= minimumWithdrawalAmount
+    Gate->>AncUSDC: burnFrom(user, ancUSDCAmount)
+    Note over AncUSDC: Gate 持有 BURNER_ROLE, 无需 approve
+    Gate->>PendingUSDC: mint(user, pendingUSDCAmount)
+    Note over Gate: 记录 WithdrawalOperation (PENDING)
+    Gate-->>User: emit PendingWithdraw(operationId, user, ancUSDCAmount, pendingUSDCAmount)
+
+    Note over User,Backend: 阶段② 后端确认提现
+    Backend->>Gate: processWithdrawal(operationId, usdcAmount)
+    Gate->>PendingUSDC: burnFrom(user, pendingUSDCAmount)
+    Gate->>USDC: safeTransfer(user, usdcAmount)
+    Note over Gate: 状态 PENDING → REDEEMED
+    Gate-->>User: emit WithdrawalProcessed(operationId, user, usdcAmount)
+```
 
 ---
 
@@ -327,7 +510,7 @@ stateDiagram-v2
 
 ```solidity
 struct DepositOperation {
-    address user;                    // 充值用户
+    address user;                   // 充值用户
     uint256 usdcAmount;             // USDC 充值金额
     uint256 pendingAncUSDCAmount;   // 待确认 ancUSDC 数量
     OperationStatus status;         // 操作状态
@@ -335,7 +518,7 @@ struct DepositOperation {
 }
 
 struct WithdrawalOperation {
-    address user;                    // 提现用户
+    address user;                   // 提现用户
     uint256 ancUSDCAmount;          // ancUSDC 提现金额
     uint256 pendingUSDCAmount;      // 待确认 USDC 数量
     OperationStatus status;         // 操作状态
@@ -490,12 +673,12 @@ graph LR
     Step1["1. 部署 MockUSDC"] --> Step2["2. 部署 PocToken(USDM)"]
     Step2 --> Step3["3. 部署 PocGate(USDC, USDM)"]
     Step3 --> Step4["4. 初始化 PocGate"]
-    Step4 --> Step5["5. 为 PocGate 授予<br/>USDM 的 MINTER/BURNER 角色"]
+    Step4 --> Step5["5. 为 PocGate 授予 USDM 的 MINTER/BURNER 角色"]
     Step5 --> Step6["6. 部署 OrderContract"]
     Step6 --> Step7["7. 初始化 OrderContract(USDM, admin, backend)"]
     Step7 --> Step8["8. 部署各股票 PocToken"]
     Step8 --> Step9["9. OrderContract.setSymbolToken()"]
-    Step9 --> Step10["10. 为后端授予各 PocToken<br/>的 MINTER 角色"]
+    Step9 --> Step10["10. 为后端授予各 PocToken 的 MINTER 角色"]
 ```
 
 **详细步骤**：

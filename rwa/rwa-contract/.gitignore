@@ -18,3 +18,6 @@ out
 forge-cache
 
 build
+
+.abis/
+deployments/

@@ -13,4 +13,3 @@ func LoadModule() fx.Option {
 		fx.Invoke(func(_ *Server, _ *SubUnsubService) {}),
 	)
 }
-

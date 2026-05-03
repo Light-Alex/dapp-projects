@@ -1,4 +1,3 @@
-
 // SPDX-License-Identifier: UNLICENSED
 /**
  * Copyright (c) 2023, Anchored Finance
@@ -23,7 +22,6 @@ contract PocToken is ERC20, AccessControlEnumerable, Initializable {
     /// @notice The Gate contract that created this token
     address public immutable GATE_CONTRACT;
 
-
     /// Override for the name allowing the name to be changed
     string internal _name;
     /// Override for the symbol allowing the symbol to be changed
@@ -40,16 +38,12 @@ contract PocToken is ERC20, AccessControlEnumerable, Initializable {
         _disableInitializers();
     }
 
-
     /**
      * @notice Initialize function for beacon proxy deployment
      * @param name_ The token name
      * @param symbol_ The token symbol
      */
-    function initialize(
-        string memory name_,
-        string memory symbol_
-    ) external virtual initializer {
+    function initialize(string memory name_, string memory symbol_) external virtual initializer {
         // Grant roles to the caller (factory)
         _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
         _grantRole(MINTER_ROLE, _msgSender());
@@ -104,7 +98,6 @@ contract PocToken is ERC20, AccessControlEnumerable, Initializable {
         emit TokensBurned(from, amount);
     }
 
-
     /**
      * @notice Check if an address has the minter role
      * @param account The address to check
@@ -123,7 +116,7 @@ contract PocToken is ERC20, AccessControlEnumerable, Initializable {
         return hasRole(BURNER_ROLE, account);
     }
 
-        /**
+    /**
      * @notice Returns the name of the token. Overrides the default name allowing the name to be changed
      *      after deployment.
      */
@@ -157,11 +150,10 @@ contract PocToken is ERC20, AccessControlEnumerable, Initializable {
 
     // ============ Errors ============
 
-
     /// Error emitted when the Gate contract address is zero
     error GateContractCannotBeZero();
 
-       /// Error emitted when an amount is zero
+    /// Error emitted when an amount is zero
     error AmountCannotBeZero();
 
     /// Error emitted when an address is zero

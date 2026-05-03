@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/AnchoredLabs/rwa-backend/apps/alpaca-stream/config"
 	"github.com/AnchoredLabs/rwa-backend/apps/alpaca-stream/constants"
@@ -288,6 +289,13 @@ func (s *AlpacaWebSocketService) onBar(ctx context.Context, symbol string, bar h
 		zap.Int64("volume", bar.Volume),
 	)
 
+	// 解析 Alpaca 返回的 RFC3339 时间戳字符串
+	timestamp, err := time.Parse(time.RFC3339, bar.Timestamp)
+	if err != nil {
+		log.ErrorZ(ctx, "Failed to parse bar timestamp", zap.String("timestamp", bar.Timestamp), zap.Error(err))
+		return
+	}
+
 	s.barKafkaService.Publish(ctx, &kafka_help.BarEvent{
 		Symbol:     symbol,
 		Open:       bar.Open,
@@ -295,7 +303,7 @@ func (s *AlpacaWebSocketService) onBar(ctx context.Context, symbol string, bar h
 		Low:        bar.Low,
 		Close:      bar.Close,
 		Volume:     bar.Volume,
-		Timestamp:  bar.Timestamp,
+		Timestamp:  timestamp.Unix(),
 		TradeCount: bar.TradeCount,
 		VWAP:       bar.VWAP,
 	})

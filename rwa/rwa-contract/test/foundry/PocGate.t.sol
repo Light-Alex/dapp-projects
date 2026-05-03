@@ -2,10 +2,10 @@
 pragma solidity ^0.8.20;
 
 import "forge-std/Test.sol";
-import {PocGate} from "contracts/poc/PocGate.sol";
-import {PocToken} from "contracts/poc/PocToken.sol";
-import {MockUSDC} from "contracts/poc/MockUSDC.sol";
-import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import { PocGate } from "contracts/poc/PocGate.sol";
+import { PocToken } from "contracts/poc/PocToken.sol";
+import { MockUSDC } from "contracts/poc/MockUSDC.sol";
+import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 contract PocGateTest is Test {
     // ============ Constants ============
@@ -43,10 +43,8 @@ contract PocGateTest is Test {
 
         // Deploy PocToken implementation with a dummy gate address, then proxy
         PocToken usdmImpl = new PocToken(address(0));
-        ERC1967Proxy usdmProxy = new ERC1967Proxy(
-            address(usdmImpl),
-            abi.encodeWithSelector(PocToken.initialize.selector, "USDM", "USDM")
-        );
+        ERC1967Proxy usdmProxy =
+            new ERC1967Proxy(address(usdmImpl), abi.encodeWithSelector(PocToken.initialize.selector, "USDM", "USDM"));
         usdm = PocToken(address(usdmProxy));
 
         // Deploy PocGate implementation (immutables set in constructor)
@@ -55,12 +53,7 @@ contract PocGateTest is Test {
         // Deploy PocGate proxy and initialize
         ERC1967Proxy gateProxy = new ERC1967Proxy(
             address(gateImpl),
-            abi.encodeWithSelector(
-                PocGate.initialize.selector,
-                admin,
-                MIN_DEPOSIT_AMOUNT,
-                MIN_WITHDRAWAL_AMOUNT
-            )
+            abi.encodeWithSelector(PocGate.initialize.selector, admin, MIN_DEPOSIT_AMOUNT, MIN_WITHDRAWAL_AMOUNT)
         );
         gate = PocGate(address(gateProxy));
 
@@ -116,12 +109,7 @@ contract PocGateTest is Test {
         vm.expectRevert(PocGate.AddressCannotBeZero.selector);
         new ERC1967Proxy(
             address(gateImpl),
-            abi.encodeWithSelector(
-                PocGate.initialize.selector,
-                address(0),
-                MIN_DEPOSIT_AMOUNT,
-                MIN_WITHDRAWAL_AMOUNT
-            )
+            abi.encodeWithSelector(PocGate.initialize.selector, address(0), MIN_DEPOSIT_AMOUNT, MIN_WITHDRAWAL_AMOUNT)
         );
     }
 

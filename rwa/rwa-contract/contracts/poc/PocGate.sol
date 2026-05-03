@@ -42,7 +42,7 @@ contract PocGate is AccessControlEnumerable, ReentrancyGuard, Initializable {
 
     /// @notice Whether withdrawals are paused
     bool public withdrawalsArePaused;
-   // ============ Events ============
+    // ============ Events ============
 
     event Deposited(address indexed user, uint256 usdcAmount, uint256 usdmAmount);
     event Withdrawn(address indexed user, uint256 usdmAmount, uint256 usdcAmount);
@@ -110,7 +110,6 @@ contract PocGate is AccessControlEnumerable, ReentrancyGuard, Initializable {
     /// Error emitted when the operation has already been processed
     error OperationAlreadyProcessed();
 
-
     /**
      * @notice Constructor for implementation contract
      * @param usdc_ The address of the USDC token
@@ -130,17 +129,14 @@ contract PocGate is AccessControlEnumerable, ReentrancyGuard, Initializable {
      * @param minimumDepositAmount_ The minimum deposit amount
      * @param minimumWithdrawalAmount_ The minimum withdrawal amount
      */
-    function initialize(
-        address guardian_,
-        uint256 minimumDepositAmount_,
-        uint256 minimumWithdrawalAmount_
-    ) external initializer {
-
+    function initialize(address guardian_, uint256 minimumDepositAmount_, uint256 minimumWithdrawalAmount_)
+        external
+        initializer
+    {
         if (guardian_ == address(0)) revert AddressCannotBeZero();
 
         minimumDepositAmount = minimumDepositAmount_;
         minimumWithdrawalAmount = minimumWithdrawalAmount_;
-
 
         _grantRole(DEFAULT_ADMIN_ROLE, guardian_);
         _grantRole(CONFIGURE_ROLE, guardian_);
@@ -173,7 +169,7 @@ contract PocGate is AccessControlEnumerable, ReentrancyGuard, Initializable {
         if (usdcAmount < minimumDepositAmount) revert DepositAmountTooSmall();
 
         // Generate unique operation ID
-        operationId = bytes32(uint(0));
+        operationId = bytes32(uint256(0));
 
         // Transfer USDC from user to contract
         IERC20(USDC).safeTransferFrom(_msgSender(), address(this), usdcAmount);
@@ -189,17 +185,12 @@ contract PocGate is AccessControlEnumerable, ReentrancyGuard, Initializable {
      * @param usdmAMOUNT The amount of ancUSDC to withdraw
      * @return operationId The ID of the withdrawal operation
      */
-    function withdraw(uint256 usdmAMOUNT)
-        external
-        nonReentrant
-        whenWithdrawalsNotPaused
-        returns (bytes32 operationId)
-    {
+    function withdraw(uint256 usdmAMOUNT) external nonReentrant whenWithdrawalsNotPaused returns (bytes32 operationId) {
         if (usdmAMOUNT == 0) revert AmountCannotBeZero();
         if (usdmAMOUNT < minimumWithdrawalAmount) revert WithdrawalAmountTooSmall();
 
         // Generate unique operation ID
-        operationId = bytes32(uint(0));
+        operationId = bytes32(uint256(0));
 
         // Burn ancUSDC from user
         IERC20(USDM).safeTransferFrom(_msgSender(), address(this), usdmAMOUNT);
@@ -212,7 +203,6 @@ contract PocGate is AccessControlEnumerable, ReentrancyGuard, Initializable {
 
         emit Withdrawn(_msgSender(), usdmAMOUNT, pendingUSDCAmount);
     }
-
 
     /**
      * @notice Set the minimum deposit amount
@@ -263,7 +253,6 @@ contract PocGate is AccessControlEnumerable, ReentrancyGuard, Initializable {
         withdrawalsArePaused = false;
         emit WithdrawalsUnpaused();
     }
-
 
     /**
      * @notice Convert amount from one token's decimals to another token's decimals

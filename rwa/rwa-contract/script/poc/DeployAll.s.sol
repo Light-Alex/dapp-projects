@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
+import "./BaseScript.s.sol";
 import { Script, console } from "forge-std/Script.sol";
 import { MockUSDC } from "../../contracts/poc/MockUSDC.sol";
 import { PocToken } from "../../contracts/poc/PocToken.sol";
@@ -10,10 +11,9 @@ import { UpgradeableBeacon } from "@openzeppelin/contracts/proxy/beacon/Upgradea
 import { BeaconProxy } from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 import { TransparentUpgradeableProxy } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
-contract DeployAll is Script {
+contract DeployAll is BaseScript {
     // ============ Configuration ============
     // Modify these before deployment
-    address public deployer;
     address public backendAddress;
     address public proxyAdmin;
 
@@ -29,9 +29,7 @@ contract DeployAll is Script {
     address public pocGateImpl;
     address public pocGateProxy;
 
-    function run() external {
-        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
-        deployer = vm.addr(deployerPrivateKey);
+    function run() public broadcaster {
         // Backend address: defaults to deployer if not set
         backendAddress = vm.envOr("BACKEND_ADDRESS", deployer);
         // Proxy admin: defaults to deployer if not set
@@ -40,8 +38,6 @@ contract DeployAll is Script {
         console.log("Deployer:", deployer);
         console.log("Backend:", backendAddress);
         console.log("ProxyAdmin:", proxyAdmin);
-
-        vm.startBroadcast(deployerPrivateKey);
 
         // =============================================
         // Step 1: Deploy MockUSDC
@@ -115,7 +111,8 @@ contract DeployAll is Script {
 
         // 5b. Deploy TransparentUpgradeableProxy for PocGate
         //     initialize(address guardian_, uint256 minimumDepositAmount_, uint256 minimumWithdrawalAmount_)
-        bytes memory gateInitData = abi.encodeWithSelector(PocGate.initialize.selector, deployer, uint256(0), uint256(0));
+        bytes memory gateInitData =
+            abi.encodeWithSelector(PocGate.initialize.selector, deployer, uint256(0), uint256(0));
         TransparentUpgradeableProxy gateProxyContract =
             new TransparentUpgradeableProxy(pocGateImpl, proxyAdmin, gateInitData);
         pocGateProxy = address(gateProxyContract);
@@ -157,7 +154,29 @@ contract DeployAll is Script {
         tsla.grantRole(BURNER_ROLE, orderProxy);
         console.log("Granted MINTER_ROLE and BURNER_ROLE on TSLA to OrderContract");
 
-        vm.stopBroadcast();
+        // 6e. Set operators on stock tokens
+        usdm.setOperator(backendAddress);
+        console.log("Set USDM operator to backendAddress");
+
+        aapl.setOperator(backendAddress);
+        console.log("Set AAPL operator to backendAddress");
+
+        tsla.setOperator(backendAddress);
+        console.log("Set TSLA operator to backendAddress");
+
+        // =============================================
+        // Save Contract Info
+        // =============================================
+        saveContract(getNetworkName(block.chainid), "MockUSDC", mockUSDCAddress);
+        saveContract(getNetworkName(block.chainid), "PocToken Impl", pocTokenImpl);
+        saveContract(getNetworkName(block.chainid), "UpgradeableBeacon", beacon);
+        saveContract(getNetworkName(block.chainid), "USDM Proxy", usdmProxy);
+        saveContract(getNetworkName(block.chainid), "AAPL.anc Proxy", aaplProxy);
+        saveContract(getNetworkName(block.chainid), "TSLA.anc Proxy", tslaProxy);
+        saveContract(getNetworkName(block.chainid), "OrderContract Impl", orderImpl);
+        saveContract(getNetworkName(block.chainid), "OrderContract Proxy", orderProxy);
+        saveContract(getNetworkName(block.chainid), "PocGate Impl", pocGateImpl);
+        saveContract(getNetworkName(block.chainid), "PocGate Proxy", pocGateProxy);
 
         // =============================================
         // Summary

@@ -12,12 +12,21 @@ ALTER TABLE order_executions ALTER COLUMN quantity TYPE NUMERIC(38,18) USING qua
 ALTER TABLE order_executions ALTER COLUMN price TYPE NUMERIC(38,18) USING price::NUMERIC(38,18);
 
 -- Add unique constraints for idempotency
-ALTER TABLE orders ADD CONSTRAINT IF NOT EXISTS uq_orders_client_order_id UNIQUE (client_order_id);
-ALTER TABLE order_executions ADD CONSTRAINT IF NOT EXISTS uq_order_executions_execution_id UNIQUE (execution_id);
-ALTER TABLE event_logs ADD CONSTRAINT IF NOT EXISTS uq_event_logs_tx_log UNIQUE (tx_hash, log_index);
-
--- Add unique constraint for positions
-ALTER TABLE positions ADD CONSTRAINT IF NOT EXISTS uq_positions_account_symbol UNIQUE (account_id, symbol);
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'uq_orders_client_order_id') THEN
+        ALTER TABLE orders ADD CONSTRAINT uq_orders_client_order_id UNIQUE (client_order_id);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'uq_order_executions_execution_id') THEN
+        ALTER TABLE order_executions ADD CONSTRAINT uq_order_executions_execution_id UNIQUE (execution_id);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'uq_event_logs_tx_log') THEN
+        ALTER TABLE event_logs ADD CONSTRAINT uq_event_logs_tx_log UNIQUE (tx_hash, log_index);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'uq_positions_account_symbol') THEN
+        ALTER TABLE positions ADD CONSTRAINT uq_positions_account_symbol UNIQUE (account_id, symbol);
+    END IF;
+END $$;
 
 -- Use TIMESTAMPTZ for timestamps
 ALTER TABLE orders ALTER COLUMN created_at TYPE TIMESTAMPTZ;

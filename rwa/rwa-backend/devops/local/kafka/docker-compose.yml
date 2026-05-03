@@ -23,7 +23,7 @@ services:
       KAFKA_LOG_DIRS: '/var/lib/kafka/data'
       CLUSTER_ID: 'ciWo7IWazngRchmPES6q5A=='
     volumes:
-      - ./data/kaka1:/var/lib/kafka/data
+      - kafka1-data:/var/lib/kafka/data
     logging:
       driver: "json-file"
       options:
@@ -56,7 +56,7 @@ services:
       KAFKA_LOG_DIRS: '/var/lib/kafka/data'
       CLUSTER_ID: 'ciWo7IWazngRchmPES6q5A=='
     volumes:
-      - ./data/kaka2:/var/lib/kafka/data
+      - kafka2-data:/var/lib/kafka/data
     logging:
       driver: "json-file"
       options:
@@ -89,7 +89,7 @@ services:
       KAFKA_LOG_DIRS: '/var/lib/kafka/data'
       CLUSTER_ID: 'ciWo7IWazngRchmPES6q5A=='
     volumes:
-      - ./data/kaka3:/var/lib/kafka/data
+      - kafka3-data:/var/lib/kafka/data
     logging:
       driver: "json-file"
       options:
@@ -124,3 +124,8 @@ services:
 networks:
   kafka:
     driver: bridge
+
+volumes:
+  kafka1-data:
+  kafka2-data:
+  kafka3-data:

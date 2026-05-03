@@ -188,7 +188,7 @@ cd rwa-contract
 npm install
 
 # 安装 Foundry 依赖（如果有 lib/ 下的 submodule）
-forge install
+forge install foundry-rs/forge-std
 ```
 
 ---
@@ -479,19 +479,23 @@ forge build
 # 从编译产物中提取 ABI（以 PocToken 为例）
 # 编译产物位于 out/ 目录下
 
+# 可使用forge命令生成ABI .json
+forge inspect PocToken abi --json > ./abis/PocToken.json
+forge inspect OrderContract abi --json > ./abis/OrderContract.json
+
 # 生成 Go 绑定代码
 abigen \
-  --abi out/PocToken.sol/PocToken.json \
-  --pkg contracts \
+  --abi ./abis/PocToken.json \
+  --pkg rwa \
   --type PocToken \
-  --out ../rwa-backend/libs/contracts/poc_token.go
+  --out ../rwa-backend/libs/contracts/rwa/poc_token.go
 
 # 对 Order 合约同样操作
 abigen \
-  --abi out/Order.sol/OrderContract.json \
-  --pkg contracts \
-  --type OrderContract \
-  --out ../rwa-backend/libs/contracts/order_contract.go
+  --abi ./abis/OrderContract.jsonn \
+  --pkg rwa \
+  --type Order \
+  --out ../rwa-backend/libs/contracts/rwa/order.go
 ```
 
 > **注意：** 如果 ABI 文件是完整的 Foundry 输出 JSON（包含 `abi` 字段和其他元数据），你可能需要先用 `jq` 提取纯 ABI 部分：

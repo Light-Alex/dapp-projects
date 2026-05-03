@@ -22,4 +22,13 @@ alpaca:
   ws_url: "wss://stream.data.alpaca.markets/v2/iex"
   ws_data_url: "wss://stream.data.alpaca.markets/v2/iex"
 
+kafka:
+  brokers:
+    - "localhost:39092"
+    - "localhost:39093"
+    - "localhost:39094"
+  enabled: true
+  orderUpdatePartitions: 3
+  barPartitions: 1
+
 

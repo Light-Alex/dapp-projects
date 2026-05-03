@@ -86,6 +86,7 @@ graph TB
 
     AlpacaStream <-->|"订单状态推送"| Alpaca_WS_Trade
     AlpacaStream <-->|"行情数据推送"| Alpaca_WS_Market
+    AlpacaStream -->|"发布订单状态变更"| Kafka_Order
     AlpacaStream -->|"发布 bar 数据"| Kafka_Bar
     AlpacaStream -->|"更新订单状态"| DB
     AlpacaStream -->|"markExecuted + mint"| SC_Order
@@ -97,9 +98,45 @@ graph TB
     API -->|"缓存"| Redis
     API -->|"查询 Alpaca"| Alpaca_Trading
 
+    WS -->|"消费订单状态"| Kafka_Order
     WS -->|"消费 bar 数据"| Kafka_Bar
     WS -->|"读取行情缓存"| Redis
 ```
+
+系统采用**六层架构**，数据在各层之间单向或双向流动，实现"链上提交意图 → 链下执行交易 → 链上结算确认"的闭环。
+
+**各层职责：**
+
+| 层 | 核心组件 | 职责 |
+|------|----------|------|
+| 用户层 | Web/Mobile 前端 | 用户与系统交互的入口，通过钱包签名提交链上交易，通过 REST/WebSocket 查询数据 |
+| 区块链层 | OrderContract / PocGate / PocToken | 资金托管、订单状态管理、充值/提现网关、代币铸造/销毁，是系统的可信结算层 |
+| 后端服务层 | Indexer / AlpacaStream / API / WS | 链上事件监听、订单状态同步、REST API、实时行情推送，是连接链上与链下的桥梁 |
+| 消息队列 | Kafka (rwa.order.update / rwa.market.bar) | 订单状态变更和行情数据的异步解耦，AlpacaStream 发布、WS Server 消费并推送至前端 |
+| 数据层 | PostgreSQL / Redis | 持久化订单和事件数据，缓存行情数据供 API 和 WS Server 读取 |
+| 外部服务 | Alpaca API / WS | 美股券商接口，负责真实的股票交易执行和行情数据源 |
+
+**核心数据流：**
+
+**订单交易流**（用户 → 链上 → 后端 → Alpaca → 链上）：
+1. 用户通过钱包调用 `OrderContract.submitOrder`，合约托管资金并 emit `OrderSubmitted` 事件
+2. Indexer 轮询链上事件，解析 `OrderSubmitted` 后将订单写入数据库，同时调用 Alpaca Trading API 下单
+3. AlpacaStream 通过 Alpaca WS (`trade_updates`) 实时接收订单成交状态（fill/partial_fill/canceled 等），更新数据库
+4. 订单完全成交后，AlpacaStream 调用链上 `markExecuted` 确认执行并退还多余资金，然后 `PocToken.mint` 铸造对应代币给用户
+
+**充值/提现流**（用户 ↔ PocGate）：
+1. 用户调用 `PocGate.deposit` 存入 USDC，PocGate 铸造等值 USDM
+2. 用户调用 `PocGate.withdraw` 退回 USDM，PocGate 销毁代币并退还 USDC
+3. 相关事件由 Indexer 监听并记录到数据库
+
+**行情推送流**（Alpaca → AlpacaStream → Kafka → WS Server → 用户）：
+1. AlpacaStream 订阅 Alpaca Market Data WS，接收实时 bar 数据
+2. 通过 Kafka topic `rwa.market.bar` 异步发布
+3. WS Server 消费 Kafka 数据，通过 WebSocket 推送给前端用户
+
+**订单状态推送流**（AlpacaStream → Kafka → WS Server → 用户）：
+1. AlpacaStream 通过 Alpaca WS 接收订单状态变更（fill/canceled/rejected 等），处理后发布到 Kafka topic `rwa.order.update`
+2. WS Server 的 `OrderUpdateSubscriber` 消费该 topic，按 `accountId` 过滤后通过 WebSocket 广播给订阅该账户的前端客户端
 
 ---
 
@@ -417,6 +454,24 @@ stateDiagram-v2
     Cancelled --> [*]
 ```
 
+**状态转换说明**：
+
+订单从创建到终态共有 4 个状态和 2 个终态：
+
+| 转换路径 | 触发函数 | 执行者 | 说明 |
+|----------|----------|--------|------|
+| `[*] → Pending` | `submitOrder()` | 用户 | 用户提交订单并托管资金，订单进入待处理状态 |
+| `Pending → Executed` | `markExecuted()` | 后端（BACKEND_ROLE） | 后端确认订单已在 Alpaca 成交，可退还多余托管资金 |
+| `Pending → CancelRequested` | `cancelOrderIntent()` | 订单所有者 | 用户主动发起取消意图，但需后端最终确认 |
+| `Pending → Cancelled` | `cancelOrder()` | 后端（BACKEND_ROLE） | 后端直接取消未成交订单，退还全部托管资金 |
+| `CancelRequested → Cancelled` | `cancelOrder()` | 后端（BACKEND_ROLE） | 后端确认用户取消请求，执行退款 |
+| `CancelRequested → Executed` | `markExecuted()` | 后端（BACKEND_ROLE） | 用户请求取消时订单已在 Alpaca 成交，此时以执行结果为准 |
+
+**关键设计要点**：
+
+- **双路径取消**：用户无法直接取消订单，必须通过 `cancelOrderIntent` 表达意图，由后端最终执行 `cancelOrder`。这确保后端在链下有足够时间处理与 Alpaca 的交互，避免链上取消与链下执行产生冲突。
+- **CancelRequested 竞态处理**：当用户发起取消后，后端仍可能调用 `markExecuted` 将订单标记为已成交（因为 Alpaca 侧可能已执行）。此时成交结果优先，用户的取消请求被覆盖，后端通过 `refundAmount` 退还多余资金。
+- **终态不可逆**：`Executed` 和 `Cancelled` 为终态，进入后不可再转换。同一订单的 `markExecuted` 和 `cancelOrder` 互斥，只能调用其中之一。
 ---
 
 ## 7. Indexer 工作原理
@@ -543,6 +598,8 @@ sequenceDiagram
 └─────────────────────────────────────────────┘
 ```
 
+**双向超时保护：** `pingLoop` 在每次发送 Ping 前设置 `WriteDeadline`，确保写操作不会无限阻塞；`PongHandler` 在收到服务端 Pong 响应后延长 `ReadDeadline`，使读超时计时器重新开始计时。如果服务端未在预期时间内返回 Pong，`ReadDeadline` 到期将触发读错误，进而由重连机制（见 8.3 节）接管恢复流程。
+
 ### 8.3 自动重连机制
 
 ```mermaid
@@ -569,15 +626,15 @@ flowchart TD
 stateDiagram-v2
     [*] --> pending: Indexer 创建订单
 
-    pending --> accepted: Alpaca WS: new
-    accepted --> partially_filled: Alpaca WS: partial_fill
-    accepted --> filled: Alpaca WS: fill
-    accepted --> cancelled: Alpaca WS: canceled
-    accepted --> rejected: Alpaca WS: rejected
-    accepted --> expired: Alpaca WS: expired
+    pending --> accepted: Alpaca WS - new
+    accepted --> partially_filled: Alpaca WS - partial_fill
+    accepted --> filled: Alpaca WS - fill
+    accepted --> cancelled: Alpaca WS - canceled
+    accepted --> rejected: Alpaca WS - rejected
+    accepted --> expired: Alpaca WS - expired
 
-    partially_filled --> filled: Alpaca WS: fill
-    partially_filled --> cancelled: Alpaca WS: canceled
+    partially_filled --> filled: Alpaca WS - fill
+    partially_filled --> cancelled: Alpaca WS - canceled
 
     filled --> [*]: callMarkExecuted 链上确认
 
@@ -603,6 +660,16 @@ stateDiagram-v2
 ```
 新均价 = (旧成交量 * 旧均价 + 本次成交量 * 本次价格) / 新总成交量
 ```
+
+这是加权平均价格公式，用于在部分成交（partial_fill）时更新订单的持仓均价。
+
+举个具体例子：
+
+- 旧状态：已成交 10 股，均价 $100（总成本 $1000）
+- 本次成交：5 股，价格 $110（本次成本 $550）
+- 新均价 = (10 × 100 + 5 × 110) / (10 + 5) = 1550 / 15 ≈ $103.33
+
+之所以不能简单地把新旧价格取平均，是因为每次成交量不同——成交量大的那笔对均价影响更大。公式用成交量作为权重，确保新均价准确反映实际的总成本。
 
 如果 Alpaca 返回了权威的 `filled_avg_price` 和 `filled_qty`，则优先使用 Alpaca 的数据。
 
@@ -708,6 +775,16 @@ flowchart LR
         D2 -->|"SELECT"| B3
     end
 ```
+
+**数据流分四个阶段：**
+
+1. **链上资金托管（实线箭头）：** 用户先 `approve` USDM 给 OrderContract，再调用 `submitOrder`。合约通过 `transferFrom` 将 USDM 从用户钱包划入合约托管，同时 emit `OrderSubmitted` 事件写入区块链日志。
+
+2. **Indexer 拾取事件并下单（实线箭头）：** EventListener 通过 `FilterLogs` 轮询链上日志，解析到 `OrderSubmitted` 后由 `HandleOrderSubmitted` 处理——先将订单 INSERT 到数据库，再调用 Alpaca API `PlaceOrder` 下单，拿到 Alpaca orderID 后 UPDATE 回数据库。
+
+3. **AlpacaStream 接收成交并链上结算（实线 + 虚线箭头）：** Alpaca Exchange 执行真实股票交易（虚线表示异步），通过 WebSocket 推送 `fill` 事件给 `OrderSyncService`，后者写入 execution 记录并更新订单状态。订单完全成交后调用链上 `markExecuted` 确认并铸造 `PocToken`，若订单取消则调用链上 `cancelOrder` 退还托管资金。
+
+4. **API 查询（实线箭头）：** 前端通过 REST API 查询订单状态，API Server 直接从 PostgreSQL 读取数据返回，不涉及链上或 Alpaca 调用。
 
 ### 9.2 数据存储模型概要
 

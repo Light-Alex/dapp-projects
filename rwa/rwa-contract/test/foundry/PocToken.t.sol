@@ -2,8 +2,8 @@
 pragma solidity ^0.8.20;
 
 import "forge-std/Test.sol";
-import {PocToken} from "contracts/poc/PocToken.sol";
-import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import { PocToken } from "contracts/poc/PocToken.sol";
+import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 contract PocTokenTest is Test {
     PocToken internal token;
@@ -19,10 +19,8 @@ contract PocTokenTest is Test {
         PocToken impl = new PocToken(address(0));
 
         // Deploy proxy and initialize
-        ERC1967Proxy proxy = new ERC1967Proxy(
-            address(impl),
-            abi.encodeWithSelector(PocToken.initialize.selector, "PocToken", "POC")
-        );
+        ERC1967Proxy proxy =
+            new ERC1967Proxy(address(impl), abi.encodeWithSelector(PocToken.initialize.selector, "PocToken", "POC"));
         token = PocToken(address(proxy));
     }
 

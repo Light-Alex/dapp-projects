@@ -139,4 +139,3 @@ func (s *ProcessTxService) ProcessBatch(ctx context.Context, events []*types.Eve
 
 	return nil
 }
-

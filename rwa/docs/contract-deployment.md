@@ -17,16 +17,172 @@
 
 部署涉及以下合约（按部署顺序）：
 
-| 序号 | 合约 | 说明 | 代理模式 |
-|---|---|---|---|
-| 1 | MockUSDC | 测试用 USDC，6 位精度 | 无代理 |
-| 2 | PocToken (USDM) | 稳定币代币，18 位精度 | BeaconProxy |
-| 3 | PocToken (AAPL.anc) | 股票代币 -- 苹果 | BeaconProxy |
-| 4 | PocToken (TSLA.anc) | 股票代币 -- 特斯拉 | BeaconProxy |
-| 5 | OrderContract | 订单合约，处理下单/执行/取消 | TransparentUpgradeableProxy |
-| 6 | PocGate | 入金/出金网关，USDC 与 USDM 兑换 | TransparentUpgradeableProxy |
+| 序号  | 合约                  | 说明                     | 代理模式                        |
+| --- | ------------------- | ---------------------- | --------------------------- |
+| 1   | MockUSDC            | 测试用 USDC，6 位精度         | 无代理                         |
+| 2   | PocToken (USDM)     | 稳定币代币，18 位精度           | BeaconProxy                 |
+| 3   | PocToken (AAPL.anc) | 股票代币 -- 苹果             | BeaconProxy                 |
+| 4   | PocToken (TSLA.anc) | 股票代币 -- 特斯拉            | BeaconProxy                 |
+| 5   | OrderContract       | 订单合约，处理下单/执行/取消        | TransparentUpgradeableProxy |
+| 6   | PocGate             | 入金/出金网关，USDC 与 USDM 兑换 | TransparentUpgradeableProxy |
 
 ---
+
+### 三种代理模式对比
+
+本项目使用了两种代理模式（BeaconProxy 和 TransparentUpgradeableProxy），下面对比三种主流可升级代理模式的区别。
+
+#### TransparentUpgradeableProxy（透明代理）
+
+```mermaid
+graph TB
+    subgraph "用户/管理员交互"
+        User["普通用户"]
+        Admin["管理员（ProxyAdmin）"]
+    end
+
+    subgraph "合约层"
+        TP["TransparentUpgradeableProxy<br/>存储：implementation, admin"]
+        Impl["Implementation V1"]
+        Impl2["Implementation V2"]
+    end
+
+    User -->|"调用业务函数<br/>delegatecall转发"| TP
+    Admin -->|"调用升级函数<br/>直接处理"| TP
+    TP -->|"delegatecall"| Impl
+    TP -.->|"升级后"| Impl2
+```
+
+**核心机制：** Proxy 合约通过 `msg.sender` 判断调用者身份。管理员调用时，Proxy 自己处理（升级、改 admin）；普通用户调用时，`delegatecall` 转发到 Implementation。
+
+**升级路径：** Admin → Proxy（修改 implementation 地址）→ 指向新实现
+
+**特点：**
+- 升级逻辑在 **Proxy** 合约中
+- 用户和管理员的函数调用不会冲突（函数选择器碰撞问题通过身份判断解决）
+- Gas 开销最大（每次调用都要检查 msg.sender）
+- 最安全，最广泛使用
+
+#### UUPS（Universal Upgradeable Proxy Standard）
+
+```mermaid
+graph TB
+    subgraph "交互"
+        User2["用户/管理员"]
+    end
+
+    subgraph "合约层"
+        UProxy["ERC1967Proxy<br/>仅存储 implementation 地址<br/>极简，无升级逻辑"]
+        UImpl["Implementation V1<br/>包含升级逻辑<br/>authorizeUpgrade()"]
+        UImpl2["Implementation V2<br/>包含升级逻辑"]
+    end
+
+    User2 -->|"所有调用 delegatecall"| UProxy
+    UProxy -->|"delegatecall<br/>（包括升级）"| UImpl
+    UImpl -.->|"upgradeToAndCall()"| UImpl2
+```
+
+**核心机制：** Proxy 极其精简，只做 `delegatecall`。升级逻辑（`upgradeToAndCall`）放在 **Implementation** 合约中，通过 `onlyProxy` / `onlyOwner` 修饰符控制权限。
+
+**升级路径：** Admin → 调用 `upgradeToAndCall()` → 通过 Proxy 的 `delegatecall` 执行 Implementation 中的升级函数 → 修改 implementation slot
+
+**特点：**
+- 升级逻辑在 **Implementation** 合约中
+- Proxy 合约最精简，部署 gas 最低
+- 如果 Implementation 忘记写升级函数 → **永久锁死**，无法再升级
+- EIP-1822 标准，比 Transparent 更省 gas
+
+#### BeaconProxy（信标代理）
+
+```mermaid
+graph TB
+    subgraph "合约层"
+        Beacon["UpgradeableBeacon<br/>存储 implementation 地址<br/>owner 可升级"]
+        BP1["BeaconProxy #1<br/>存储 beacon 地址"]
+        BP2["BeaconProxy #2<br/>存储 beacon 地址"]
+        BP3["BeaconProxy #3<br/>存储 beacon 地址"]
+        BImpl["Implementation<br/>（所有代理共享）"]
+        BImpl2["Implementation V2<br/>（一次升级，全部生效）"]
+    end
+
+    BP1 -->|"implementation()"| Beacon
+    BP2 -->|"implementation()"| Beacon
+    BP3 -->|"implementation()"| Beacon
+    Beacon -->|"返回地址"| BImpl
+    Beacon -.->|"upgrade() 升级"| BImpl2
+
+    BImpl -.->|"delegatecall"| BP1
+    BImpl -.->|"delegatecall"| BP2
+    BImpl -.->|"delegatecall"| BP3
+```
+
+```mermaid
+sequenceDiagram
+    participant User as 用户
+    participant Proxy as BeaconProxy
+    participant Beacon as UpgradeableBeacon
+    participant Impl as 实现合约
+
+    User->>Proxy: 调用 someFunction()
+    Proxy->>Beacon: implementation()
+    Beacon-->>Proxy: 返回实现地址
+    Proxy->>Impl: delegatecall someFunction()
+    Impl-->>Proxy: 返回结果
+    Proxy-->>User: 返回结果
+```
+
+
+```mermaid
+graph TD
+    Factory[AnchoredTokenFactory]
+    Beacon[UpgradeableBeacon<br/>存储: 实现合约地址]
+    Impl[AnchoredToken<br/>实现合约]
+
+    P1[BeaconProxy<br/>AAPL Token]
+    P2[BeaconProxy<br/>TSLA Token]
+    P3[BeaconProxy<br/>GOOGL Token]
+    Pn[BeaconProxy<br/>...]
+
+    Factory -->|创建| Beacon
+    Factory -->|创建| P1
+    Factory -->|创建| P2
+    Factory -->|创建| P3
+    Factory -->|创建| Pn
+
+    P1 -->|查询实现地址| Beacon
+    P2 -->|查询实现地址| Beacon
+    P3 -->|查询实现地址| Beacon
+    Pn -->|查询实现地址| Beacon
+    Beacon -->|指向| Impl
+
+    style Beacon fill:#f9f,stroke:#333
+    style Impl fill:#bbf,stroke:#333
+```
+
+
+**核心机制：** 代理合约不直接存储 implementation 地址，而是存储一个 **Beacon** 合约的地址。每次调用时，Proxy 先向 Beacon 查询当前 implementation 地址，再 `delegatecall`。
+
+**升级路径：** Beacon Owner → 调用 Beacon 的 `upgrade()` → 所有 BeaconProxy 自动指向新实现
+
+**特点：**
+- 适合**工厂模式**（如本项目 AnchoredTokenFactory）—— 批量部署同类型代理
+- 一次升级 Beacon，所有代理全部生效
+- 每次调用多一次 `SLOAD`（从 Beacon 读取 implementation），gas 略高
+- 如果需要每个代理独立升级实现，不适合用这个模式
+
+#### 总结对比
+
+| 维度 | TransparentProxy | UUPS | BeaconProxy |
+|------|-----------------|------|-------------|
+| 升级逻辑位置 | Proxy 合约 | Implementation 合约 | Beacon 合约 |
+| Proxy 合约大小 | 大 | 最小 | 中等 |
+| 每次调用 Gas | 最高（身份检查） | 最低 | 中等（Beacon 查询） |
+| 批量升级 | 不支持 | 不支持 | **支持**（核心优势） |
+| 锁死风险 | 无 | 有（忘记升级函数） | 无 |
+| 适用场景 | 通用升级 | 单合约升级 | 工厂模式 / 多实例 |
+| 本项目使用 | OrderContract, PocGate | 未使用 | PocToken (USDM, AAPL, TSLA) |
+
+项目中 AnchoredTokenFactory 使用 BeaconProxy 正是因为需要为每个 RWA 资产部署一个代币代理，且所有代币共享同一实现，升级时只需更新 Beacon 即可
 
 ## 2. 环境准备
 
@@ -96,7 +252,7 @@ PROXY_ADMIN_ADDRESS=0xProxyAdminAddress
 BSCSCAN_API_KEY=YourBscScanApiKey
 ```
 
-> 获取 BSCScan API Key：注册 https://testnet.bscscan.com，在 API Keys 页面创建。
+> 获取 BSCScan API Key：注册 https://testnet.bscscan.com, 在 API Keys 页面创建。
 
 ### 2.6 配置 foundry.toml
 
@@ -277,40 +433,17 @@ source .env
 ### 5.2 执行部署（不验证合约）
 
 ```bash
-forge script script/poc/DeployAll.s.sol:DeployAll \
-    --rpc-url https://data-seed-prebsc-1-s1.binance.org:8545 \
-    --private-key $PRIVATE_KEY \
-    --broadcast \
-    -vvvv
+forge script script/poc/DeployAll.s.sol --rpc-url bsc_testnet --broadcast
 ```
 
 ### 5.3 执行部署并验证合约
 
 ```bash
-forge script script/poc/DeployAll.s.sol:DeployAll \
-    --rpc-url https://data-seed-prebsc-1-s1.binance.org:8545 \
-    --private-key $PRIVATE_KEY \
-    --broadcast \
-    --verify \
-    --etherscan-api-key $BSCSCAN_API_KEY \
-    -vvvv
+forge script script/poc/DeployAll.s.sol --rpc-url bsc_testnet --broadcast --verify
 ```
 
-### 5.4 使用 foundry.toml 中的 RPC profile
 
-如果已在 `foundry.toml` 中配置了 `[rpc_endpoints]`，可以使用别名：
-
-```bash
-forge script script/poc/DeployAll.s.sol:DeployAll \
-    --rpc-url bsc_testnet \
-    --private-key $PRIVATE_KEY \
-    --broadcast \
-    --verify \
-    --etherscan-api-key $BSCSCAN_API_KEY \
-    -vvvv
-```
-
-### 5.5 使用 keystore 账户（更安全）
+### 5.4 使用 keystore 账户（更安全）
 
 ```bash
 # 导入私钥到 keystore
@@ -326,15 +459,12 @@ forge script script/poc/DeployAll.s.sol:DeployAll \
     -vvvv
 ```
 
-### 5.6 仅模拟部署（不广播交易）
+### 5.5 仅模拟部署（不广播交易）
 
 去掉 `--broadcast` 参数即可进行 dry run：
 
 ```bash
-forge script script/poc/DeployAll.s.sol:DeployAll \
-    --rpc-url bsc_testnet \
-    --private-key $PRIVATE_KEY \
-    -vvvv
+forge script script/poc/DeployAll.s.sol --rpc-url bsc_testnet
 ```
 
 ---
@@ -524,9 +654,9 @@ cast call <ORDER_PROXY_ADDRESS> \
 
 ### 部署信息
 
-| 项目 | 值 |
-|---|---|
-| 部署日期 | YYYY-MM-DD |
-| 部署网络 | BSC Testnet (Chain ID: 97) |
-| 部署交易哈希 | `0x...` |
-| Forge broadcast 目录 | `rwa-contract/broadcast/DeployAll.s.sol/97/` |
+| 项目                   | 值                                       |
+| -------------------- | --------------------------------------- |
+| 部署日期                 | YYYY-MM-DD                              |
+| 部署网络                 | BSC Testnet (Chain ID: 97)              |
+| 部署交易哈希               | `0x...`                                 |
+| Forge deployments 目录 | `rwa-contract/deployments/bsc_test/97/` |

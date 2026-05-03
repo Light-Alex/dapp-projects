@@ -8,7 +8,7 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
  * @notice 简单的 ERC20 测试代币，decimals 为 6
  */
 contract MockUSDC is ERC20 {
-    constructor() ERC20("Mock USDC", "USDC") {}
+    constructor() ERC20("Mock USDC", "USDC") { }
 
     function decimals() public view virtual override returns (uint8) {
         return 6;

@@ -32,7 +32,7 @@ db:
   maxOpenConns: 200
   logLevel: 2
   sqlSlowThresholdMill: 10000
-  migrationPath: "file://migrations/rwa"
+  migrationPath: "file://../../migrations/rwa"
   sslMode: "disable"
 
 alpaca:
@@ -48,10 +48,10 @@ logger:
   maxAge: 30
   enableColor: true
 
-frontendTx:
-  proxyWallet:
-    mnemonic: "regret tumble escape crime open feature simple receive clog unaware window cruise"
-    derivationPath: "m/44'/60'/0'/0"
-  jwt:
-    secret: "your-jwt-secret-key-change-in-production"
-    expirationHours: 24
+# frontendTx:
+#   proxyWallet:
+#     mnemonic: "regret tumble escape crime open feature simple receive clog unaware window cruise"
+#     derivationPath: "m/44'/60'/0'/0"
+#   jwt:
+#     secret: "your-jwt-secret-key-change-in-production"
+#     expirationHours: 24

@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-import {AccessControlEnumerable} from "@openzeppelin/contracts/access/extensions/AccessControlEnumerable.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
-import {IPocToken} from "./IPocToken.sol";
+import { AccessControlEnumerable } from "@openzeppelin/contracts/access/extensions/AccessControlEnumerable.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
+import { IPocToken } from "./IPocToken.sol";
 
 /**
  * @title OrderContract
@@ -16,10 +16,30 @@ contract OrderContract is AccessControlEnumerable, ReentrancyGuard, Initializabl
     bytes32 public constant BACKEND_ROLE = keccak256("BACKEND_ROLE");
 
     // ============ Types ============
-    enum Side { Buy, Sell }
-    enum OrderType { Market, Limit }
-    enum Status { Pending, Executed, CancelRequested, Cancelled }
-    enum TimeInForce { DAY, GTC, OPG, IOC, FOK, GTX, GTD, CLS }
+    enum Side {
+        Buy,
+        Sell
+    }
+    enum OrderType {
+        Market,
+        Limit
+    }
+    enum Status {
+        Pending,
+        Executed,
+        CancelRequested,
+        Cancelled
+    }
+    enum TimeInForce {
+        DAY,
+        GTC,
+        OPG,
+        IOC,
+        FOK,
+        GTX,
+        GTD,
+        CLS
+    }
 
     // ============ Storage ============
     // USDM used as the payment token for Buy orders
@@ -29,31 +49,50 @@ contract OrderContract is AccessControlEnumerable, ReentrancyGuard, Initializabl
     // Global auto-increment nonce for unique orderId (used as storage key)
     uint256 public nextOrderId;
     // Per-account incrementing order sequence (used for display order number)
-    mapping(address => uint) public accountOrderSeq;
+    mapping(address => uint256) public accountOrderSeq;
 
     struct Order {
-        uint id;
-        uint orderNumber; // Display-only structured order number (AAAAAABBSSSSSSSSSS)
+        uint256 id;
+        uint256 orderNumber; // Display-only structured order number (AAAAAABBSSSSSSSSSS)
         address user;
         string symbol; // Business-side symbol
-        uint qty;
+        uint256 qty;
         address escrowAsset; // Actual escrowed asset (USDM or the symbol's PocToken)
-        uint amount; // Escrowed amount (Buy: price*qty; Sell: qty), using 18 decimals
-        uint price; // For Market: user's acceptable worst execution price; for Limit: limit price
+        uint256 amount; // Escrowed amount (Buy: price*qty; Sell: qty), using 18 decimals
+        uint256 price; // For Market: user's acceptable worst execution price; for Limit: limit price
         Side side;
         OrderType orderType;
         Status status;
         TimeInForce tif;
     }
 
-    mapping(uint => Order) public orders; // orderId => Order
+    mapping(uint256 => Order) public orders; // orderId => Order
 
     // ============ Events ============
     // Consistent with documentation: address, orderId, amount, price, side, orderType
-    event OrderSubmitted(address indexed user, uint indexed orderId, string symbol, uint qty, uint price, Side side, OrderType orderType, TimeInForce tif, uint blockTimestamp);
-    event CancelRequested(address indexed user, uint indexed orderId, uint blockTimestamp);
-    event OrderExecuted(uint indexed orderId, address indexed user, uint refundAmount, TimeInForce tif);
-    event OrderCancelled(uint indexed orderId, address indexed user, address asset, uint refundAmount, Side side, OrderType orderType, TimeInForce tif, Status previousStatus);
+    event OrderSubmitted(
+        address indexed user,
+        uint256 indexed orderId,
+        string symbol,
+        uint256 qty,
+        uint256 price,
+        Side side,
+        OrderType orderType,
+        TimeInForce tif,
+        uint256 blockTimestamp
+    );
+    event CancelRequested(address indexed user, uint256 indexed orderId, uint256 blockTimestamp);
+    event OrderExecuted(uint256 indexed orderId, address indexed user, uint256 refundAmount, TimeInForce tif);
+    event OrderCancelled(
+        uint256 indexed orderId,
+        address indexed user,
+        address asset,
+        uint256 refundAmount,
+        Side side,
+        OrderType orderType,
+        TimeInForce tif,
+        Status previousStatus
+    );
 
     // ============ Errors ============
     error AmountZero();
@@ -115,12 +154,12 @@ contract OrderContract is AccessControlEnumerable, ReentrancyGuard, Initializabl
      */
     function submitOrder(
         string calldata symbol,
-        uint qty,
-        uint price,
+        uint256 qty,
+        uint256 price,
         Side side,
         OrderType orderType,
         TimeInForce tif
-    ) external nonReentrant returns (uint orderId) {
+    ) external nonReentrant returns (uint256 orderId) {
         if (qty == 0) revert AmountZero();
 
         // Select escrow asset by side: Buy uses USDM; Sell uses the registered symbol token
@@ -128,13 +167,13 @@ contract OrderContract is AccessControlEnumerable, ReentrancyGuard, Initializabl
         if (address(token) == address(0)) revert ZeroAddress();
 
         // Calculate escrowed amount: Buy is price*qty (18 decimals, rounded down); Sell is qty
-        uint escrowAmount = side == Side.Buy ? Math.mulDiv(price, qty, 1e18) : qty;
+        uint256 escrowAmount = side == Side.Buy ? Math.mulDiv(price, qty, 1e18) : qty;
 
         // Escrow transfer
         require(token.transferFrom(msg.sender, address(this), escrowAmount), "TRANSFER_FROM_FAIL");
 
         // Create order with globally unique auto-increment ID
-        uint seq = ++accountOrderSeq[msg.sender];
+        uint256 seq = ++accountOrderSeq[msg.sender];
         orderId = ++nextOrderId;
         Order storage oNew = orders[orderId];
         oNew.id = orderId;
@@ -156,7 +195,7 @@ contract OrderContract is AccessControlEnumerable, ReentrancyGuard, Initializabl
     /**
      * @notice User initiates a cancellation intent (only Pending can initiate)
      */
-    function cancelOrderIntent(uint orderId) external {
+    function cancelOrderIntent(uint256 orderId) external {
         Order storage o = orders[orderId];
         if (o.user != msg.sender) revert NotOwner();
         if (o.status != Status.Pending) revert InvalidStatus();
@@ -169,25 +208,25 @@ contract OrderContract is AccessControlEnumerable, ReentrancyGuard, Initializabl
      * @notice Backend marks the order as executed and burns all escrowed funds
      * @dev Requires this contract to be granted the BURNER_ROLE for the escrow asset (USDM or symbol token)
      */
-    function markExecuted(uint orderId, uint refundAmount) external onlyRole(BACKEND_ROLE) nonReentrant {
-         Order storage o = orders[orderId];
-         if (o.status == Status.Executed) revert AlreadyExecuted();
-         if (o.status == Status.Cancelled) revert AlreadyCancelled();
-         if (o.user == address(0)) revert NotFound();
-         // Set status to Executed
-         o.status = Status.Executed;
-         // Refund any excess amount (if present)
-         if (refundAmount > 0) {
-             bool ok = IPocToken(o.escrowAsset).transfer(o.user, refundAmount);
-             require(ok, "REFUND_FAIL");
-         }
-         emit OrderExecuted(orderId, o.user, refundAmount, o.tif);
-     }
+    function markExecuted(uint256 orderId, uint256 refundAmount) external onlyRole(BACKEND_ROLE) nonReentrant {
+        Order storage o = orders[orderId];
+        if (o.status == Status.Executed) revert AlreadyExecuted();
+        if (o.status == Status.Cancelled) revert AlreadyCancelled();
+        if (o.user == address(0)) revert NotFound();
+        // Set status to Executed
+        o.status = Status.Executed;
+        // Refund any excess amount (if present)
+        if (refundAmount > 0) {
+            bool ok = IPocToken(o.escrowAsset).transfer(o.user, refundAmount);
+            require(ok, "REFUND_FAIL");
+        }
+        emit OrderExecuted(orderId, o.user, refundAmount, o.tif);
+    }
 
     /**
      * @notice Backend finally cancels the order and refunds all escrowed funds to the user (only when in CancelRequested)
      */
-    function cancelOrder(uint orderId) external onlyRole(BACKEND_ROLE) nonReentrant {
+    function cancelOrder(uint256 orderId) external onlyRole(BACKEND_ROLE) nonReentrant {
         Order storage o = orders[orderId];
         // Only allow cancelling non-executed and non-already-cancelled orders (supports Pending and CancelRequested)
         if (o.status == Status.Executed || o.status == Status.Cancelled) revert InvalidStatus();
@@ -196,7 +235,7 @@ contract OrderContract is AccessControlEnumerable, ReentrancyGuard, Initializabl
 
         // Refund entire escrowed amount
         IPocToken token = IPocToken(o.escrowAsset);
-        uint refundAmount = o.amount;
+        uint256 refundAmount = o.amount;
         bool ok = token.transfer(o.user, refundAmount);
         require(ok, "TRANSFER_FAIL");
 
@@ -204,27 +243,35 @@ contract OrderContract is AccessControlEnumerable, ReentrancyGuard, Initializabl
     }
 
     // ============ Views ============
-    function getOrder(uint orderId) external view returns (Order memory) {
+    function getOrder(uint256 orderId) external view returns (Order memory) {
         return orders[orderId];
     }
+
     /**
      * @notice Return the human-readable combined order number: `AAAAAABBSSSSSSSSSS` (all digits)
      * @dev AAAAAA: 6-digit hash of account address; BB: order type (01=Market, 02=Limit); SSSSSSSSSS: per-account sequence, 10 digits (left-padded with zeros when displaying)
      */
-    function getOrderNumber(uint orderId) external view returns (uint) {
+    function getOrderNumber(uint256 orderId) external view returns (uint256) {
         Order storage o = orders[orderId];
         if (o.user == address(0)) revert NotFound();
         return o.orderNumber;
     }
+
     // Helper: return structured order type code
-    function _orderTypeCode(OrderType orderType) internal pure returns (uint) {
+    function _orderTypeCode(OrderType orderType) internal pure returns (uint256) {
         // Adjustable encoding if needed: currently 01=Market, 02=Limit
         return orderType == OrderType.Market ? 1 : 2;
     }
+
     // Helper: compose structured order id `AAAAAABBSSSSSSSSSS`
-    function _composeOrderId(address user, OrderType orderType, uint seq) internal pure returns (uint) {
-        uint A = uint(keccak256(abi.encodePacked(user))) % 1_000_000; // 6-digit number
-        uint BB = _orderTypeCode(orderType); // 2-digit number
+    // example:
+    //  A: 123456
+    //  BB: 2
+    //  seq: 3
+    //  return: 123456 * 1000000000000 + 2 * 10000000000 + 3 = 123456020000000003
+    function _composeOrderId(address user, OrderType orderType, uint256 seq) internal pure returns (uint256) {
+        uint256 A = uint256(keccak256(abi.encodePacked(user))) % 1_000_000; // 6-digit number
+        uint256 BB = _orderTypeCode(orderType); // 2-digit number
         // 10-digit sequence part (left zero-padding handled on the frontend display), here we directly combine numeric parts
         return A * 1_000_000_000_000 + BB * 10_000_000_000 + seq;
     }

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/AnchoredLabs/rwa-backend/apps/indexer/config"
+	"github.com/AnchoredLabs/rwa-backend/libs/core/evm_helper"
 	"github.com/AnchoredLabs/rwa-backend/libs/core/models/rwa"
 	"github.com/AnchoredLabs/rwa-backend/libs/log"
 	"github.com/acmestack/gorm-plus/gplus"
@@ -14,16 +15,18 @@ import (
 
 // BlockService maintains the latest processed block number
 type BlockService struct {
-	db    *gorm.DB
-	conf  *config.Config
-	chainID uint64
+	db        *gorm.DB
+	conf      *config.Config
+	chainID   uint64
+	evmClient *evm_helper.EvmClient
 }
 
-func NewBlockService(db *gorm.DB, conf *config.Config) *BlockService {
+func NewBlockService(db *gorm.DB, conf *config.Config, evmClient *evm_helper.EvmClient) *BlockService {
 	return &BlockService{
-		db:      db,
-		conf:    conf,
-		chainID: conf.Chain.ChainId,
+		db:        db,
+		conf:      conf,
+		chainID:   conf.Chain.ChainId,
+		evmClient: evmClient,
 	}
 }
 
@@ -41,6 +44,16 @@ func (s *BlockService) GetLastProcessedBlock(ctx context.Context) (uint64, error
 	}
 	// Initialize if not exists
 	startBlock := s.conf.Indexer.StartBlock
+	if startBlock == 0 {
+		client := s.evmClient.MustGetHttpClient(s.chainID)
+		header, err := client.HeaderByNumber(ctx, nil)
+		if err != nil {
+			log.ErrorZ(ctx, "failed to get latest block number for startBlock=0", zap.Error(err))
+			return 0, err
+		}
+		startBlock = header.Number.Uint64()
+		log.InfoZ(ctx, "startBlock is 0, using latest block number", zap.Uint64("startBlock", startBlock))
+	}
 	dbRes = gplus.Insert(&rwa.EventClientRecord{
 		ChainID:     s.chainID,
 		LastBlock:   startBlock,
@@ -87,4 +100,3 @@ func (s *BlockService) GetLastEventID(ctx context.Context) (uint64, error) {
 	}
 	return 0, nil
 }
-

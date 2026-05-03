@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/AnchoredLabs/rwa-backend/apps/indexer/config"
-	coreTypes "github.com/AnchoredLabs/rwa-backend/libs/core/types"
 	"github.com/AnchoredLabs/rwa-backend/libs/core/evm_helper"
+	coreTypes "github.com/AnchoredLabs/rwa-backend/libs/core/types"
 	"github.com/AnchoredLabs/rwa-backend/libs/log"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
@@ -82,7 +82,7 @@ func (l *EventListener) GetLatestBlockNumber(ctx context.Context) (uint64, error
 // FetchEventsByBlockRange fetches events for a range of blocks with proper event ID assignment
 func (l *EventListener) FetchEventsByBlockRange(ctx context.Context, fromBlock, toBlock uint64, startEventID uint64) ([]*coreTypes.EventLogWithId, error) {
 	client := l.evmClient.MustGetHttpClient(l.chainID)
-	
+
 	// Create filter query for all monitored contracts
 	query := ethereum.FilterQuery{
 		FromBlock: new(big.Int).SetUint64(fromBlock),
@@ -92,7 +92,8 @@ func (l *EventListener) FetchEventsByBlockRange(ctx context.Context, fromBlock, 
 
 	logs, err := client.FilterLogs(ctx, query)
 	if err != nil {
-		log.ErrorZ(ctx, "failed to filter logs", 
+		log.ErrorZ(ctx, "failed to filter logs",
+			zap.String("rpcURL", l.evmClient.MustGetRpcInfo(l.chainID).RpcUrl),
 			zap.Uint64("fromBlock", fromBlock),
 			zap.Uint64("toBlock", toBlock),
 			zap.Error(err))
@@ -240,4 +241,3 @@ func (l *EventListener) pollAndProcess(ctx context.Context, blockService *BlockS
 
 	return nil
 }
-

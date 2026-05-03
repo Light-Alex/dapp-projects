@@ -92,9 +92,9 @@ X-API-Key: your-api-key-here
 - **URL**: `GET /trade/currentPrice`
 - **请求参数**:
 
-| 参数 | 类型 | 必填 | 说明 | 示例 |
-|------|------|------|------|------|
-| `symbol` | string | 是 | 股票代码 | `AAPL` |
+| 参数       | 类型     | 必填  | 说明   | 示例     |
+| -------- | ------ | --- | ---- | ------ |
+| `symbol` | string | 是   | 股票代码 | `AAPL` |
 
 - **响应示例**:
 
@@ -112,6 +112,15 @@ X-API-Key: your-api-key-here
 }
 ```
 
+**当前价格字段说明**：
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `symbol` | string | 股票代码 |
+| `price` | float64 | 最新成交价格 |
+| `volume` | float64 | 当日累计成交量（股数） |
+| `timestamp` | int64 | 价格更新时间戳（Unix 秒级时间戳） |
+
 ---
 
 #### 获取最新报价
@@ -121,9 +130,9 @@ X-API-Key: your-api-key-here
 - **URL**: `GET /trade/latestQuote`
 - **请求参数**:
 
-| 参数 | 类型 | 必填 | 说明 | 示例 |
-|------|------|------|------|------|
-| `symbol` | string | 是 | 股票代码 | `AAPL` |
+| 参数       | 类型     | 必填  | 说明   | 示例     |
+| -------- | ------ | --- | ---- | ------ |
+| `symbol` | string | 是   | 股票代码 | `AAPL` |
 
 - **响应示例**:
 
@@ -147,6 +156,24 @@ X-API-Key: your-api-key-here
   "requestId": "..."
 }
 ```
+
+**Quote 字段说明**：
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `timestamp` | int64 | 报价时间戳（Unix 秒级时间戳） |
+| `bid_price` | float64 | 买入价（Bid Price）：买方愿意支付的最高价格 |
+| `bid_size` | uint32 | 买入量：以买入价可交易的股数 |
+| `ask_price` | float64 | 卖出价（Ask Price）：卖方愿意接受的最低价格 |
+| `ask_size` | uint32 | 卖出量：以卖出价可交易的股数 |
+| `bid_exchange` | string | 买入报价交易所代码（如 Q=NASDAQ, N=NYSE, A=AMEX, P=ARCA 等） |
+| `ask_exchange` | string | 卖出报价交易所代码 |
+| `conditions` | string[] | 报价条件代码数组（用于标识特殊交易条件） |
+| `tape` | string | 报价带标识：`A`= Tape A（NYSE）、`B`= Tape B（NASDAQ/AMEX/区域交易所）、`C`= Tape C（其他区域交易所） |
+
+**买卖价差（Bid-Ask Spread）**：
+- 买卖价差 = `ask_price` - `bid_price`，反映市场流动性
+- 价差越小，流动性越好；价差越大，交易成本越高
 
 ---
 
@@ -222,6 +249,76 @@ X-API-Key: your-api-key-here
 }
 ```
 
+**Snapshot 字段说明**：
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `symbol` | string | 股票代码 |
+| `latest_trade` | object | 最新成交数据 |
+| `latest_quote` | object | 最新买卖报价 |
+| `minute_bar` | object | 当前 1 分钟 K 线数据 |
+| `daily_bar` | object | 当日 K 线数据 |
+| `prev_daily_bar` | object | 前一交易日 K 线数据 |
+
+**最新成交（latest_trade）字段**：
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `timestamp` | int64 | 成交时间戳 |
+| `price` | float64 | 成交价格 |
+| `size` | uint32 | 成交数量 |
+| `exchange` | string | 成交交易所代码 |
+| `id` | int64 | 成交唯一 ID |
+| `conditions` | string[] | 成交条件代码 |
+| `tape` | string | 报价带标识 |
+
+**K 线数据（minute_bar / daily_bar / prev_daily_bar）字段**：
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `timestamp` | int64 | K 线时间戳（周期开始时间） |
+| `open` | float64 | 开盘价 |
+| `high` | float64 | 最高价 |
+| `low` | float64 | 最低价 |
+| `close` | float64 | 收盘价 |
+| `volume` | uint64 | 成交总量（股票数量） |
+| `trade_count` | uint64 | 成交笔数（交易次数） |
+| `vwap` | float64 | 成交量加权平均价 |
+
+**Volume vs Trade Count 区别**：
+
+| 指标 | 含义 | 示例 |
+|------|------|------|
+| `volume` | 成交的股票/合约总数量 | 一笔交易买入 1000 股 → volume = 1000 |
+| `trade_count` | 独立交易的次数（tick 数） | 一笔交易买入 1000 股 → trade_count = 1 |
+
+**实际场景对比**：
+```
+场景1：一笔大单
+买方以 $178.50 一次性买入 1000 股
+→ volume = 1000，trade_count = 1
+
+场景2：多笔小单
+买方分 10 次买入，每次 100 股
+→ volume = 1000，trade_count = 10
+```
+
+**VWAP 计算公式**：
+
+```
+VWAP = Σ(价格 × 成交量) / 总成交量
+```
+
+**计算示例**：
+```
+交易1：以 $178.00 买入 100 股
+交易2：以 $178.50 买入 200 股  
+交易3：以 $179.00 买入 150 股
+
+VWAP = (178.00 × 100 + 178.50 × 200 + 179.00 × 150) / 450
+     = $178.56
+```
+
 ---
 
 #### 获取历史 K 线数据
@@ -234,9 +331,9 @@ X-API-Key: your-api-key-here
 | 参数 | 类型 | 必填 | 说明 | 示例 |
 |------|------|------|------|------|
 | `symbol` | string | 是 | 股票代码 | `AAPL` |
-| `start_time` | int | 是 | 开始时间（Unix 秒级时间戳） | `1704067200` |
-| `end_time` | int | 是 | 结束时间（Unix 秒级时间戳） | `1706745599` |
-| `interval` | string | 是 | 时间间隔 | `1d` |
+| `start_time` | int | 是 | 采集的开始时间（Unix 秒级时间戳） | `1704067200` |
+| `end_time` | int | 是 | 采集的结束时间（Unix 秒级时间戳） | `1706745599` |
+| `interval` | string | 是 | 采集的时间间隔 | `1d` |
 | `limit` | int | 否 | 返回最大条数 | `100` |
 
 **interval 支持的格式**：
@@ -258,13 +355,22 @@ X-API-Key: your-api-key-here
     "symbol": "AAPL",
     "data": [
       {
-        "open": 177.50,
-        "high": 179.20,
-        "low": 177.10,
-        "close": 178.52,
-        "volume": 52341200,
-        "timestamp": 1704067200
-      }
+        "open": 187.15,
+        "high": 188.44,
+        "low": 183.885,
+        "close": 185.64,
+        "volume": 82496943,
+        "timestamp": 1704171600
+      },
+      {
+        "open": 184.22,
+        "high": 185.88,
+        "low": 183.43,
+        "close": 184.25,
+        "volume": 58418916,
+        "timestamp": 1704258000
+      },
+      ...
     ]
   },
   "code": 0,
@@ -297,6 +403,20 @@ X-API-Key: your-api-key-here
 }
 ```
 
+**市场时钟字段说明**：
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `timestamp` | int64 | 当前服务器时间戳（Unix 秒级时间戳） |
+| `is_open` | bool | 市场是否开盘 |
+| `next_open` | int64 | 下一次开盘时间戳（Unix 秒级时间戳） |
+| `next_close` | int64 | 下一次闭盘时间戳（Unix 秒级时间戳） |
+
+**美股交易时间**：
+- **常规交易时间**：周一至周五 9:30 - 16:00（美东时间）
+- **盘前交易**：04:00 - 9:30
+- **盘后交易**：16:00 - 20:00
+
 ---
 
 #### 获取资产列表
@@ -312,6 +432,13 @@ X-API-Key: your-api-key-here
 | `asset_class` | string | 否 | 资产类型（`us_equity` / `crypto`） | `us_equity` |
 | `exchange` | string | 否 | 交易所名称 | `NASDAQ` |
 
+**支持的资产类型**：
+
+| 资产类型 | 标识符 | 说明 | 示例 |
+|---------|--------|------|------|
+| 美股股票 | `us_equity` | 美国交易所上市的股票 | AAPL、GOOGL、TSLA |
+| 加密货币 | `crypto` | 数字货币交易对 | BTC/USD、ETH/USD |
+
 - **响应示例**:
 
 ```json
@@ -319,20 +446,25 @@ X-API-Key: your-api-key-here
   "data": {
     "assets": [
       {
-        "id": "b0b6dd9d-8b9b-48a9-ba46-b9d54906e415",
-        "class": "us_equity",
-        "exchange": "NASDAQ",
-        "symbol": "AAPL",
-        "name": "Apple Inc.",
-        "status": "active",
-        "tradable": true,
-        "marginable": true,
-        "maintenance_margin_requirement": 25,
-        "shortable": true,
-        "easy_to_borrow": true,
-        "fractionable": true,
-        "attributes": []
-      }
+          "id": "4ce9353c-66d1-46c2-898f-fce867ab0247",
+          "class": "us_equity",
+          "exchange": "NASDAQ",
+          "symbol": "NVDA",
+          "name": "NVIDIA Corporation Common Stock",
+          "status": "active",
+          "tradable": true,
+          "marginable": true,
+          "maintenance_margin_requirement": 30,
+          "shortable": true,
+          "easy_to_borrow": true,
+          "fractionable": true,
+          "attributes": [
+              "fractional_eh_enabled",
+              "has_options",
+              "overnight_tradable"
+          ]
+      },
+      ...
     ]
   },
   "code": 0,
@@ -340,6 +472,109 @@ X-API-Key: your-api-key-here
   "requestId": "..."
 }
 ```
+
+**资产字段说明**：
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `id` | string | 资产唯一标识符（UUID） |
+| `class` | string | 资产类型：`us_equity`（美股）或 `crypto`（加密货币） |
+| `exchange` | string | 交易所名称（如 NASDAQ、NYSE、AMEX 等） |
+| `symbol` | string | 股票/资产代码 |
+| `name` | string | 资产全称 |
+| `status` | string | 资产状态：`active`（活跃）或 `inactive`（停用） |
+| `tradable` | bool | 是否可交易 |
+| `marginable` | bool | 是否支持保证金交易（融资买入） |
+| `maintenance_margin_requirement` | uint | 维持保证金要求（百分比） |
+| `shortable` | bool | 是否支持做空 |
+| `easy_to_borrow` | bool | 是否易于借入（做空时需要借入股票） |
+| `fractionable` | bool | 是否支持零股交易（可买入 < 1 股） |
+| `attributes` | string[] | 资产额外属性列表 |
+
+**资产属性（attributes）说明**：
+
+| 属性 | 说明 |
+|------|------|
+| `fractional_eh_enabled` | 支持盘后零股交易 |
+| `has_options` | 该股票有期权交易 |
+| `overnight_tradable` | 支持隔夜交易 |
+
+**保证金交易说明**：
+保证金交易（Margin Trading）是指向券商借钱购买股票，放大你的购买力和潜在收益，但也同时放大风险。
+- `marginable = true`：可使用保证金账户融资买入该股票
+- `maintenance_margin_requirement = 30`：需维持 30% 的保证金比例
+- 例如：融资 $10,000 买入股票，需维持至少 $3,000 的账户权益
+
+**账户权益（Account Equity）详解**：
+
+账户权益是指你**实际拥有的资金**，计算公式为：
+
+```
+账户权益 = 持仓市值 - 借款金额
+```
+
+**实际案例**：
+
+```
+初始状态：
+├─ 自有资金：$10,000
+├─ 借入资金：$10,000
+├─ 总投资：  $20,000（200股 @ $100）
+└─ 账户权益：$10,000
+
+---
+
+股价涨到 $120 时：
+├─ 持仓市值：$24,000（200股 × $120）
+├─ 借款金额：$10,000（不变）
+├─ 账户权益：$14,000 = $24,000 - $10,000
+└─ 收益：    +$4,000（40%）
+
+---
+
+股价跌到 $80 时：
+├─ 持仓市值：$16,000（200股 × $80）
+├─ 借款金额：$10,000（不变）
+├─ 账户权益：$6,000 = $16,000 - $10,000
+└─ 亏损：    -$4,000（-40%）
+
+---
+
+股价跌到 $40 时（危险）：
+├─ 持仓市值：$8,000（200股 × $40）
+├─ 借款金额：$10,000（不变）
+├─ 账户权益：-$2,000 = $8,000 - $10,000
+└─ ⚠️ 负权益！触发强制平仓
+```
+
+**维持保证金检查**：
+
+```
+维持保证金要求 = 持仓市值 × 维持比例
+实际账户权益 ≥ 维持保证金要求 ✅ 安全
+实际账户权益 < 维持保证金要求 ❌ 追加保证金
+```
+
+**示例检查**（维持比例 30%）：
+
+```
+股价 $70：
+持仓市值：$14,000
+维持要求：$14,000 × 30% = $4,200
+账户权益：$14,000 - $10,000 = $4,000
+
+$4,000 < $4,200 ❌ 低于维持线！
+→ 需要存入现金或卖出股票
+```
+
+**做空交易说明**：
+- `shortable = true`：可做空该股票
+- `easy_to_borrow = true`：股票易于借入，做空费用较低
+- `easy_to_borrow = false`：股票难以借入，做空费用较高或无法做空
+
+**零股交易说明**：
+- `fractionable = true`：可购买少于 1 股的股票
+- 例如：可投入 $100 购买 $178.52 的股票，获得约 0.56 股
 
 ---
 
@@ -510,6 +745,74 @@ X-API-Key: your-api-key-here
 }
 ```
 
+**订单字段说明**：
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `id` | uint64 | 数据库内部订单 ID |
+| `clientOrderId` | string | 客户端订单 ID（链上订单唯一标识） |
+| `accountId` | uint64 | 账户 ID |
+| `symbol` | string | 股票代码 |
+| `assetType` | string | 资产类型（`us_equity` 美股 / `crypto` 加密货币） |
+| `side` | string | 订单方向：`buy`（买入）/ `sell`（卖出） |
+| `type` | string | 订单类型：`market`（市价）/ `limit`（限价）/ `stop`（止损）/ `stop_limit`（止损限价） |
+| `quantity` | string | 订单数量（18 位精度字符串） |
+| `price` | string | 订单价格（限价单有效，18 位精度字符串） |
+| `stopPrice` | string | 止损价格（止损单有效，18 位精度字符串） |
+| `status` | string | 订单状态（见下方状态说明） |
+| `filledQuantity` | string | 已成交数量（18 位精度字符串） |
+| `filledPrice` | string | 成交均价（18 位精度字符串） |
+| `remainingQuantity` | string | 剩余未成交数量（18 位精度字符串） |
+| `contractTxHash` | string | 链上订单交易哈希 |
+| `externalOrderId` | string | 外部订单 ID（Alpaca 订单 ID） |
+| `provider` | string | 交易提供商（`alpaca`） |
+| `commission` | string | 手续费金额 |
+| `commissionAsset` | string | 手续费资产（`USD`） |
+| `createdAt` | int64 | 订单创建时间戳 |
+| `updatedAt` | int64 | 订单最后更新时间戳 |
+| `submittedAt` | int64 | 订单提交时间戳 |
+| `filledAt` | int64 | 订单成交时间戳 |
+
+**订单状态（status）说明**：
+
+| 状态 | 说明 | 时机 |
+|------|------|------|
+| `pending` | 待处理 | 订单已创建，等待提交到券商 |
+| `accepted` | 已接受 | 订单已被券商接受，等待成交 |
+| `partially_filled` | 部分成交 | 订单部分成交，剩余继续等待 |
+| `filled` | 完全成交 | 订单完全成交 |
+| `cancelled` | 已取消 | 订单被取消（可能部分成交） |
+| `expired` | 已过期 | 订单过期未成交 |
+| `rejected` | 已拒绝 | 订单被券商拒绝 |
+
+**订单类型（type）说明**：
+
+| 类型 | 说明 | 必填字段 |
+|------|------|----------|
+| `market` | 市价单 | 以当前最优价格立即成交 |
+| `limit` | 限价单 | 指定价格，优于该价格才成交 |
+| `stop` | 止损单 | 触发止损价后转为市价单 |
+| `stop_limit` | 止损限价单 | 触发止损价后转为限价单 |
+
+**数量精度说明**：
+- 所有数量字段使用 **18 位精度**的字符串表示（与链上合约一致）
+- 例如：`"10.000000000000000000"` = 10 股
+- 例如：`"178.520000000000000000"` = $178.52
+
+**订单时间线**：
+
+```mermaid
+graph LR
+    A[createdAt] --> B[submittedAt]
+    B --> C{订单状态}
+    C -->|pending| D[等待券商接受]
+    C -->|filled| E[filledAt]
+    C -->|cancelled| F[取消完成]
+    
+    style E fill:#9f9
+    style F fill:#f99
+```
+
 ---
 
 #### 获取订单详情
@@ -602,6 +905,53 @@ X-API-Key: your-api-key-here
   "requestId": "..."
 }
 ```
+
+**订单成交记录字段说明**：
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `id` | uint64 | 成交记录内部 ID |
+| `orderId` | uint64 | 所属订单 ID |
+| `executionId` | string | 成交唯一标识符 |
+| `quantity` | string | 本次成交数量（18 位精度字符串） |
+| `price` | string | 本次成交价格（18 位精度字符串） |
+| `commission` | string | 本次成交手续费 |
+| `commissionAsset` | string | 手续费资产（`USD`） |
+| `provider` | string | 交易提供商（`alpaca`） |
+| `externalId` | string | 外部成交 ID（Alpaca 成交 ID） |
+| `executedAt` | int64 | 成交时间戳 |
+| `createdAt` | int64 | 记录创建时间戳 |
+
+**订单 vs 成交记录关系**：
+
+```mermaid
+graph LR
+    A[订单] -->|100股| B[成交记录1: 50股]
+    A -->|50股| C[成交记录2: 30股]
+    A -->|20股| D[成交记录3: 20股]
+    
+    style A fill:#9cf
+    style B fill:#9f9
+    style C fill:#9f9
+    style D fill:#9f9
+```
+
+**实际案例**：
+```
+订单：买入 100 股 AAPL @ $178.50（限价单）
+
+成交记录拆分：
+├─ 记录1：成交 50 股 @ $178.50，手续费 $0.025
+├─ 记录2：成交 30 股 @ $178.50，手续费 $0.015
+└─ 记录3：成交 20 股 @ $178.50，手续费 $0.010
+
+订单状态：filled（完全成交）
+```
+
+**为什么会有多条成交记录**：
+- 大额订单可能被拆分成多个小订单执行
+- 不同时间点成交，价格可能不同
+- 每条成交记录独立计算手续费
 
 ---
 

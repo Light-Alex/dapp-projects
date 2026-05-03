@@ -11,21 +11,21 @@ import (
 
 // BarMessage represents a bar (candle) message
 type BarMessage struct {
-	Stream string       `json:"stream"`
-	Data   []BarData    `json:"data"`
+	Stream string    `json:"stream"`
+	Data   []BarData `json:"data"`
 }
 
 // BarData represents a single bar
 type BarData struct {
-	Symbol    string  `json:"S"` // Symbol
-	Open      float64 `json:"o"` // Open price
-	High      float64 `json:"h"` // High price
-	Low       float64 `json:"l"` // Low price
-	Close     float64 `json:"c"` // Close price
-	Volume    int64   `json:"v"` // Volume
-	Timestamp int64   `json:"t"` // Timestamp (Unix nanoseconds)
-	TradeCount int64  `json:"n,omitempty"` // Trade count
-	VWAP      float64 `json:"vw,omitempty"` // Volume weighted average price
+	Symbol     string  `json:"S"`            // Symbol
+	Open       float64 `json:"o"`            // Open price
+	High       float64 `json:"h"`            // High price
+	Low        float64 `json:"l"`            // Low price
+	Close      float64 `json:"c"`            // Close price
+	Volume     int64   `json:"v"`            // Volume
+	Timestamp  string  `json:"t"`            // Timestamp (RFC3339 format from Alpaca)
+	TradeCount int64   `json:"n,omitempty"`  // Trade count
+	VWAP       float64 `json:"vw,omitempty"` // Volume weighted average price
 }
 
 // BarsHandler handles bar messages
@@ -66,10 +66,9 @@ func (h *BarsHandler) Handle(ctx context.Context, message json.RawMessage) error
 			zap.Float64("low", bar.Low),
 			zap.Float64("close", bar.Close),
 			zap.Int64("volume", bar.Volume),
-			zap.Int64("timestamp", bar.Timestamp),
+			zap.String("timestamp", bar.Timestamp),
 		)
 	}
 
 	return nil
 }
-

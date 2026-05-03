@@ -2,9 +2,9 @@
 pragma solidity ^0.8.20;
 
 import "forge-std/Test.sol";
-import {OrderContract} from "contracts/poc/Order.sol";
-import {PocToken} from "contracts/poc/PocToken.sol";
-import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import { OrderContract } from "contracts/poc/Order.sol";
+import { PocToken } from "contracts/poc/PocToken.sol";
+import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 contract OrderTest is Test {
     OrderContract internal order;
@@ -18,10 +18,31 @@ contract OrderTest is Test {
     string internal symbol = "ABC";
 
     // Event declarations (keep the same signatures as in OrderContract)
-    event OrderSubmitted(address indexed user, uint indexed orderId, string symbol, uint amount, uint price, OrderContract.Side side, OrderContract.OrderType orderType, OrderContract.TimeInForce tif, uint blockTimestamp);
-    event CancelRequested(address indexed user, uint indexed orderId, uint blockTimestamp);
-    event OrderExecuted(uint indexed orderId, uint refundAmount, OrderContract.TimeInForce tif);
-    event OrderCancelled(uint indexed orderId, address indexed user, address asset, uint refundAmount, OrderContract.Side side, OrderContract.OrderType orderType, OrderContract.TimeInForce tif, OrderContract.Status previousStatus);
+    event OrderSubmitted(
+        address indexed user,
+        uint256 indexed orderId,
+        string symbol,
+        uint256 qty,
+        uint256 price,
+        OrderContract.Side side,
+        OrderContract.OrderType orderType,
+        OrderContract.TimeInForce tif,
+        uint256 blockTimestamp
+    );
+    event CancelRequested(address indexed user, uint256 indexed orderId, uint256 blockTimestamp);
+    event OrderExecuted(
+        uint256 indexed orderId, address indexed user, uint256 refundAmount, OrderContract.TimeInForce tif
+    );
+    event OrderCancelled(
+        uint256 indexed orderId,
+        address indexed user,
+        address asset,
+        uint256 refundAmount,
+        OrderContract.Side side,
+        OrderContract.OrderType orderType,
+        OrderContract.TimeInForce tif,
+        OrderContract.Status previousStatus
+    );
 
     function setUp() public {
         // Deploy implementation contracts
@@ -30,22 +51,17 @@ contract OrderTest is Test {
         OrderContract orderImpl = new OrderContract();
 
         // Initialize USDM and symbol token via proxies
-        ERC1967Proxy usdmProxy = new ERC1967Proxy(
-            address(usdmImpl),
-            abi.encodeWithSelector(PocToken.initialize.selector, "USDM", "USDM")
-        );
+        ERC1967Proxy usdmProxy =
+            new ERC1967Proxy(address(usdmImpl), abi.encodeWithSelector(PocToken.initialize.selector, "USDM", "USDM"));
         usdm = PocToken(address(usdmProxy));
 
-        ERC1967Proxy symProxy = new ERC1967Proxy(
-            address(symImpl),
-            abi.encodeWithSelector(PocToken.initialize.selector, "ABC", "ABC")
-        );
+        ERC1967Proxy symProxy =
+            new ERC1967Proxy(address(symImpl), abi.encodeWithSelector(PocToken.initialize.selector, "ABC", "ABC"));
         symToken = PocToken(address(symProxy));
 
         // Initialize order contract via proxy
         ERC1967Proxy orderProxy = new ERC1967Proxy(
-            address(orderImpl),
-            abi.encodeWithSelector(OrderContract.initialize.selector, address(usdm), admin, backend)
+            address(orderImpl), abi.encodeWithSelector(OrderContract.initialize.selector, address(usdm), admin, backend)
         );
         order = OrderContract(address(orderProxy));
 
@@ -58,21 +74,26 @@ contract OrderTest is Test {
     }
 
     function testSubmitOrder_Buy_StoresStateAndBalances() public {
-        uint qty = 100e18;
-        uint price = 2e18;
+        uint256 qty = 100e18;
+        uint256 price = 2e18;
         OrderContract.TimeInForce tif = OrderContract.TimeInForce.GTC;
-        uint escrowAmount = (price * qty) / 1e18;
+        uint256 escrowAmount = (price * qty) / 1e18;
 
         vm.startPrank(user);
         usdm.approve(address(order), escrowAmount);
-        uint beforeUser = usdm.balanceOf(user);
-        uint beforeContract = usdm.balanceOf(address(order));
-        uint orderId = order.submitOrder(symbol, qty, price, OrderContract.Side.Buy, OrderContract.OrderType.Market, tif);
+        uint256 beforeUser = usdm.balanceOf(user);
+        uint256 beforeContract = usdm.balanceOf(address(order));
+        uint256 orderId =
+            order.submitOrder(symbol, qty, price, OrderContract.Side.Buy, OrderContract.OrderType.Market, tif);
         vm.stopPrank();
 
         // Check balance change
         assertEq(usdm.balanceOf(user), beforeUser - escrowAmount, "USDM user balance should decrease by escrowAmount");
-        assertEq(usdm.balanceOf(address(order)), beforeContract + escrowAmount, "USDM contract balance should increase by escrowAmount");
+        assertEq(
+            usdm.balanceOf(address(order)),
+            beforeContract + escrowAmount,
+            "USDM contract balance should increase by escrowAmount"
+        );
 
         // Check stored order
         OrderContract.Order memory o = order.getOrder(orderId);
@@ -80,44 +101,52 @@ contract OrderTest is Test {
         assertEq(o.symbol, symbol, "order.symbol");
         assertEq(o.amount, escrowAmount, "order.amount");
         assertEq(o.price, price, "order.price");
-        assertEq(uint(o.side), uint(OrderContract.Side.Buy), "order.side");
-        assertEq(uint(o.orderType), uint(OrderContract.OrderType.Market), "order.orderType");
-        assertEq(uint(o.status), uint(OrderContract.Status.Pending), "order.status");
-        assertEq(uint(o.tif), uint(tif), "order.tif");
+        assertEq(uint256(o.side), uint256(OrderContract.Side.Buy), "order.side");
+        assertEq(uint256(o.orderType), uint256(OrderContract.OrderType.Market), "order.orderType");
+        assertEq(uint256(o.status), uint256(OrderContract.Status.Pending), "order.status");
+        assertEq(uint256(o.tif), uint256(tif), "order.tif");
         assertEq(o.escrowAsset, address(usdm), "order.escrowAsset should be USDM for Buy");
 
         // Check per-account sequence mapping
         assertEq(order.accountOrderSeq(user), 1, "seq should be 1 for first order");
 
-        // getOrderNumber equals orderId
-        assertEq(order.getOrderNumber(orderId), orderId, "getOrderNumber should equal orderId");
+        // Check orderNumber is a valid non-zero value (format: AAAAAABBSSSSSSSSSS)
+        uint256 orderNumber = order.getOrderNumber(orderId);
+        assertGt(orderNumber, 0, "orderNumber should be greater than 0");
     }
 
     function testSubmitOrder_Sell_StoresStateAndBalances() public {
-        uint qty = 50e18;
-        uint price = 3e18;
+        uint256 qty = 50e18;
+        uint256 price = 3e18;
         OrderContract.TimeInForce tif = OrderContract.TimeInForce.DAY;
-        uint escrowAmount = qty; // Sell escrow is qty
+        uint256 escrowAmount = qty; // Sell escrow is qty
 
         vm.startPrank(user);
         symToken.approve(address(order), escrowAmount);
-        uint beforeUser = symToken.balanceOf(user);
-        uint beforeContract = symToken.balanceOf(address(order));
-        uint orderId = order.submitOrder(symbol, qty, price, OrderContract.Side.Sell, OrderContract.OrderType.Limit, tif);
+        uint256 beforeUser = symToken.balanceOf(user);
+        uint256 beforeContract = symToken.balanceOf(address(order));
+        uint256 orderId =
+            order.submitOrder(symbol, qty, price, OrderContract.Side.Sell, OrderContract.OrderType.Limit, tif);
         vm.stopPrank();
 
-        assertEq(symToken.balanceOf(user), beforeUser - escrowAmount, "symbol user balance should decrease by escrowAmount");
-        assertEq(symToken.balanceOf(address(order)), beforeContract + escrowAmount, "symbol contract balance should increase by escrowAmount");
+        assertEq(
+            symToken.balanceOf(user), beforeUser - escrowAmount, "symbol user balance should decrease by escrowAmount"
+        );
+        assertEq(
+            symToken.balanceOf(address(order)),
+            beforeContract + escrowAmount,
+            "symbol contract balance should increase by escrowAmount"
+        );
 
         OrderContract.Order memory o = order.getOrder(orderId);
         assertEq(o.user, user, "order.user");
         assertEq(o.symbol, symbol, "order.symbol");
         assertEq(o.amount, escrowAmount, "order.amount");
         assertEq(o.price, price, "order.price");
-        assertEq(uint(o.side), uint(OrderContract.Side.Sell), "order.side");
-        assertEq(uint(o.orderType), uint(OrderContract.OrderType.Limit), "order.orderType");
-        assertEq(uint(o.status), uint(OrderContract.Status.Pending), "order.status");
-        assertEq(uint(o.tif), uint(tif), "order.tif");
+        assertEq(uint256(o.side), uint256(OrderContract.Side.Sell), "order.side");
+        assertEq(uint256(o.orderType), uint256(OrderContract.OrderType.Limit), "order.orderType");
+        assertEq(uint256(o.status), uint256(OrderContract.Status.Pending), "order.status");
+        assertEq(uint256(o.tif), uint256(tif), "order.tif");
         assertEq(o.escrowAsset, address(symToken), "order.escrowAsset should be symbol token for Sell");
 
         // Check per-account sequence mapping increment
@@ -126,12 +155,13 @@ contract OrderTest is Test {
 
     function testCancelOrderIntent_EmitsEventAndUpdatesStatus() public {
         // Submit an order first
-        uint qty = 10e18;
-        uint price = 1e18;
+        uint256 qty = 10e18;
+        uint256 price = 1e18;
         OrderContract.TimeInForce tif = OrderContract.TimeInForce.GTC;
         vm.startPrank(user);
         usdm.approve(address(order), (price * qty) / 1e18);
-        uint orderId = order.submitOrder(symbol, qty, price, OrderContract.Side.Buy, OrderContract.OrderType.Market, tif);
+        uint256 orderId =
+            order.submitOrder(symbol, qty, price, OrderContract.Side.Buy, OrderContract.OrderType.Market, tif);
         vm.stopPrank();
 
         // Expect event (only check topics to avoid matching complex data)
@@ -142,67 +172,82 @@ contract OrderTest is Test {
         order.cancelOrderIntent(orderId);
 
         OrderContract.Order memory o = order.getOrder(orderId);
-        assertEq(uint(o.status), uint(OrderContract.Status.CancelRequested), "status should be CancelRequested");
+        assertEq(uint256(o.status), uint256(OrderContract.Status.CancelRequested), "status should be CancelRequested");
     }
 
     function testMarkExecuted_ByBackend_RefundsAndEmits() public {
         // Submit and cancel intent
-        uint qty = 10e18;
-        uint price = 4e18;
+        uint256 qty = 10e18;
+        uint256 price = 4e18;
         OrderContract.TimeInForce tif = OrderContract.TimeInForce.IOC;
         vm.startPrank(user);
         usdm.approve(address(order), (price * qty) / 1e18);
-        uint orderId = order.submitOrder(symbol, qty, price, OrderContract.Side.Buy, OrderContract.OrderType.Limit, tif);
+        uint256 orderId =
+            order.submitOrder(symbol, qty, price, OrderContract.Side.Buy, OrderContract.OrderType.Limit, tif);
         vm.stopPrank();
         vm.prank(user);
         order.cancelOrderIntent(orderId);
 
-        uint refundAmount = 1e18;
-        uint beforeUser = usdm.balanceOf(user);
+        uint256 refundAmount = 1e18;
+        uint256 beforeUser = usdm.balanceOf(user);
 
-        // Expect event (check indexed orderId)
-        vm.expectEmit(false, true, true, false, address(order));
-        emit OrderExecuted(orderId, refundAmount, OrderContract.TimeInForce.IOC);
+        // Expect event (check indexed orderId and user)
+        vm.expectEmit(true, true, true, true, address(order));
+        emit OrderExecuted(orderId, user, refundAmount, OrderContract.TimeInForce.IOC);
 
         vm.prank(backend);
         order.markExecuted(orderId, refundAmount);
 
         OrderContract.Order memory o = order.getOrder(orderId);
-        assertEq(uint(o.status), uint(OrderContract.Status.Executed), "status should be Executed");
+        assertEq(uint256(o.status), uint256(OrderContract.Status.Executed), "status should be Executed");
         assertEq(usdm.balanceOf(user), beforeUser + refundAmount, "user should receive refundAmount");
     }
 
     function testCancelOrder_ByBackend_RefundsAllAndEmits() public {
         // Submit order (allow direct cancel from Pending without cancel intent)
-        uint qty = 5e18;
-        uint price = 2e18;
+        uint256 qty = 5e18;
+        uint256 price = 2e18;
         OrderContract.TimeInForce tif = OrderContract.TimeInForce.FOK;
         vm.startPrank(user);
         usdm.approve(address(order), (price * qty) / 1e18);
-        uint orderId = order.submitOrder(symbol, qty, price, OrderContract.Side.Buy, OrderContract.OrderType.Limit, tif);
+        uint256 orderId =
+            order.submitOrder(symbol, qty, price, OrderContract.Side.Buy, OrderContract.OrderType.Limit, tif);
         vm.stopPrank();
 
         OrderContract.Order memory before = order.getOrder(orderId);
-        uint beforeUser = usdm.balanceOf(user);
+        uint256 beforeUser = usdm.balanceOf(user);
 
         // Expect event (check indexed orderId and user)
         vm.expectEmit(true, true, true, false, address(order));
-        emit OrderCancelled(orderId, user, before.escrowAsset, before.amount, OrderContract.Side.Buy, OrderContract.OrderType.Limit, tif, OrderContract.Status.Pending);
+        emit OrderCancelled(
+            orderId,
+            user,
+            before.escrowAsset,
+            before.amount,
+            OrderContract.Side.Buy,
+            OrderContract.OrderType.Limit,
+            tif,
+            OrderContract.Status.Pending
+        );
 
         vm.prank(backend);
         order.cancelOrder(orderId);
 
         OrderContract.Order memory o = order.getOrder(orderId);
-        assertEq(uint(o.status), uint(OrderContract.Status.Cancelled), "status should be Cancelled");
+        assertEq(uint256(o.status), uint256(OrderContract.Status.Cancelled), "status should be Cancelled");
         assertEq(usdm.balanceOf(user), beforeUser + before.amount, "user should receive full refund");
     }
 
     function testPerAccountSequence_IncrementsPerUser() public {
         // Two orders for user
         vm.startPrank(user);
-        usdm.approve(address(order), type(uint).max);
-        uint id1 = order.submitOrder(symbol, 1e18, 1e18, OrderContract.Side.Buy, OrderContract.OrderType.Market, OrderContract.TimeInForce.GTC);
-        uint id2 = order.submitOrder(symbol, 1e18, 1e18, OrderContract.Side.Buy, OrderContract.OrderType.Market, OrderContract.TimeInForce.GTC);
+        usdm.approve(address(order), type(uint256).max);
+        uint256 id1 = order.submitOrder(
+            symbol, 1e18, 1e18, OrderContract.Side.Buy, OrderContract.OrderType.Market, OrderContract.TimeInForce.GTC
+        );
+        uint256 id2 = order.submitOrder(
+            symbol, 1e18, 1e18, OrderContract.Side.Buy, OrderContract.OrderType.Market, OrderContract.TimeInForce.GTC
+        );
         vm.stopPrank();
         assertEq(order.accountOrderSeq(user), 2, "seq should be 2 for user after two orders");
 
@@ -210,8 +255,10 @@ contract OrderTest is Test {
         // Pre-mint to other must be called by admin holding MINTER_ROLE
         usdm.mint(other, 10e18);
         vm.startPrank(other);
-        usdm.approve(address(order), type(uint).max);
-        uint id3 = order.submitOrder(symbol, 1e18, 1e18, OrderContract.Side.Buy, OrderContract.OrderType.Market, OrderContract.TimeInForce.GTC);
+        usdm.approve(address(order), type(uint256).max);
+        uint256 id3 = order.submitOrder(
+            symbol, 1e18, 1e18, OrderContract.Side.Buy, OrderContract.OrderType.Market, OrderContract.TimeInForce.GTC
+        );
         vm.stopPrank();
         assertEq(order.accountOrderSeq(other), 1, "seq for first order of other user should be 1");
     }
@@ -219,7 +266,9 @@ contract OrderTest is Test {
     function testSubmitOrder_Revert_AmountZero() public {
         vm.prank(user);
         vm.expectRevert(OrderContract.AmountZero.selector);
-        order.submitOrder(symbol, 0, 1e18, OrderContract.Side.Buy, OrderContract.OrderType.Market, OrderContract.TimeInForce.GTC);
+        order.submitOrder(
+            symbol, 0, 1e18, OrderContract.Side.Buy, OrderContract.OrderType.Market, OrderContract.TimeInForce.GTC
+        );
     }
 
     function testSubmitOrder_Sell_Revert_UnregisteredSymbol() public {
@@ -227,7 +276,9 @@ contract OrderTest is Test {
         vm.startPrank(user);
         symToken.approve(address(order), 1e18);
         vm.expectRevert(OrderContract.ZeroAddress.selector);
-        order.submitOrder("XYZ", 1e18, 1e18, OrderContract.Side.Sell, OrderContract.OrderType.Limit, OrderContract.TimeInForce.GTC);
+        order.submitOrder(
+            "XYZ", 1e18, 1e18, OrderContract.Side.Sell, OrderContract.OrderType.Limit, OrderContract.TimeInForce.GTC
+        );
         vm.stopPrank();
     }
 
@@ -235,7 +286,9 @@ contract OrderTest is Test {
         // First submit by user
         vm.startPrank(user);
         usdm.approve(address(order), 1e18);
-        uint orderId = order.submitOrder(symbol, 1e18, 1e18, OrderContract.Side.Buy, OrderContract.OrderType.Market, OrderContract.TimeInForce.GTC);
+        uint256 orderId = order.submitOrder(
+            symbol, 1e18, 1e18, OrderContract.Side.Buy, OrderContract.OrderType.Market, OrderContract.TimeInForce.GTC
+        );
         vm.stopPrank();
 
         // Other tries to cancel intent
@@ -248,7 +301,9 @@ contract OrderTest is Test {
         // Submit order without moving to CancelRequested
         vm.startPrank(user);
         usdm.approve(address(order), 1e18);
-        uint orderId = order.submitOrder(symbol, 1e18, 1e18, OrderContract.Side.Buy, OrderContract.OrderType.Market, OrderContract.TimeInForce.GTC);
+        uint256 orderId = order.submitOrder(
+            symbol, 1e18, 1e18, OrderContract.Side.Buy, OrderContract.OrderType.Market, OrderContract.TimeInForce.GTC
+        );
         vm.stopPrank();
 
         // Non-backend caller

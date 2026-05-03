@@ -5,12 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/IBM/sarama"
 	"github.com/AnchoredLabs/rwa-backend/apps/ws-server/types"
 	"github.com/AnchoredLabs/rwa-backend/apps/ws-server/ws"
 	"github.com/AnchoredLabs/rwa-backend/libs/core/kafka_help"
 	"github.com/AnchoredLabs/rwa-backend/libs/kafka"
 	"github.com/AnchoredLabs/rwa-backend/libs/log"
+	"github.com/IBM/sarama"
 	"github.com/olahol/melody"
 	"go.uber.org/fx"
 	"go.uber.org/zap"

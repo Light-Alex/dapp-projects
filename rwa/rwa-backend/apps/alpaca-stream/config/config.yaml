@@ -5,6 +5,11 @@ alpaca:
   api_secret: "H7JJw42qDoA6H1ETGa8DtvzKi7esneM1iaykzG1tXGrm"
   ws_url: "wss://paper-api.alpaca.markets/stream"  # For trade updates
   ws_data_url: "wss://stream.data.alpaca.markets/v2/iex"  # For market data (bars, quotes, trades)
+  enable_market_data: false  # Whether to enable market data streaming
+  symbols:
+    - "AAPL"
+    - "TSLA"
+
 
 rpcInfo:
   97:
@@ -30,7 +35,7 @@ db:
   maxOpenConns: 200
   logLevel: 2
   sqlSlowThresholdMill: 10000
-  migrationPath: "file://migrations/rwa"
+  migrationPath: "file://../../migrations/rwa"
   sslMode: "disable"
 
 logger:
@@ -40,3 +45,11 @@ logger:
   maxAge: 30
   enableColor: true
 
+kafka:
+  brokers:
+    - "127.0.0.1:39092"
+    - "127.0.0.1:39093"
+    - "127.0.0.1:39094"
+  enabled: true
+  orderUpdatePartitions: 3
+  barPartitions: 1

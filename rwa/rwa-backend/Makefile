@@ -21,10 +21,10 @@ sync:
 .PHONY: install_kafka install_database install_all
 
 install_kafka:
-	docker-compose -f ./devops/local/kafka/docker-compose.yml up -d
+	docker compose -f ./devops/local/kafka/docker-compose.yml up -d
 
 install_database:
-	docker-compose -f ./devops/local/database/docker-compose.yml up -d
+	docker compose -f ./devops/local/database/docker-compose.yml up -d
 
 # install_all will run both installers
 install_all: install_kafka install_database

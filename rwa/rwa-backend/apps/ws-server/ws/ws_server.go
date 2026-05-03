@@ -74,5 +74,3 @@ func (s *Server) Stop(ctx context.Context) error {
 	log.InfoZ(ctx, "ws server stop success")
 	return nil
 }
-
-

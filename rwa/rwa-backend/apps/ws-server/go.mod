@@ -7,7 +7,6 @@ require (
 	github.com/AnchoredLabs/rwa-backend/libs/errors v0.0.0
 	github.com/AnchoredLabs/rwa-backend/libs/log v0.0.0
 	github.com/IBM/sarama v1.46.1
-	github.com/gorilla/websocket v1.5.3
 	github.com/olahol/melody v1.3.0
 	github.com/urfave/cli/v3 v3.4.1
 	go.uber.org/fx v1.24.0
@@ -44,6 +43,7 @@ require (
 	github.com/goccy/go-yaml v1.18.0 // indirect
 	github.com/golang/snappy v1.0.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
+	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/hashicorp/go-uuid v1.0.3 // indirect
 	github.com/holiman/uint256 v1.3.2 // indirect
 	github.com/jcmturner/aescts/v2 v2.0.0 // indirect

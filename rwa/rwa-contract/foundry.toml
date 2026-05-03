@@ -1,48 +1,61 @@
+# 默认配置文件
 [profile.default]
-src = 'contracts'
-out = 'out'
-libs = ["node_modules", "lib"]
-test = 'test/foundry'
-cache_path  = 'forge-cache'
-optimizer = true
-optimizer_runs = 200
+src = 'contracts'           # 源代码目录
+out = 'out'                 # 编译输出目录
+libs = ["node_modules", "lib"]  # 库文件搜索路径
+test = 'test/foundry'       # 测试文件目录
+cache_path  = 'forge-cache' # 缓存路径
+optimizer = true            # 启用优化器
+optimizer_runs = 200        # 优化器运行次数
 
 
+# 导入路径重映射
 remappings = [
     '@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/',
 ]
 
+# 文件系统权限设置
 fs_permissions = [
-    { access = "read", path = "./node_modules"},
+    { access = "read", path = "./node_modules"},  # 允许读取 node_modules 目录
+    { access = "read-write", path = "./deployments" },
 ]
 
-# Gas reporting
+# Gas 报告配置 - 报告所有合约的 gas 使用情况
 gas_reports = ["*"]
 
-# Coverage configuration
+# 覆盖率配置 - 排除测试文件和 mock 文件
 [profile.default.coverage]
 exclude = [
-    "test/**",
-    "**/*.t.sol", 
-    "**/Mock*.sol",
-    "**/Test*.sol"
+    "test/**",        # 排除测试目录
+    "**/*.t.sol",     # 排除测试文件
+    "**/Mock*.sol",   # 排除 Mock 合约
+    "**/Test*.sol"    # 排除测试合约
 ]
 
-# Formatting configuration - Compact style with 120 char limit
+# 格式化配置 - 紧凑风格，120 字符限制
 [fmt]
-line_length = 120
-tab_width = 4
-style = "space"
-bracket_spacing = true
-int_types = "long"
-multiline_func_header = "attributes_first"
-quote_style = "double"
-number_underscore = "preserve"
-hex_underscore = "remove"
-single_line_statement_blocks = "preserve"
-override_spacing = false
-wrap_comments = false
-contract_new_lines = false
-sort_imports = false
+line_length = 120             # 每行最大字符数
+tab_width = 4                 # tab 宽度
+style = "space"               # 使用空格缩进
+bracket_spacing = true        # 大括号内空格
+int_types = "long"            # 使用 uint256 而非 uint
+multiline_func_header = "attributes_first"  # 多行函数头属性优先
+quote_style = "double"        # 使用双引号
+number_underscore = "preserve"  # 保留数字中的下划线
+hex_underscore = "remove"     # 移除十六进制中的下划线
+single_line_statement_blocks = "preserve"  # 保留单行语句块
+override_spacing = false      # override 关键字后不加空格
+wrap_comments = false         # 不自动换行注释
+contract_new_lines = false    # 合约定义前不加空行
+sort_imports = false          # 不自动排序导入
+
+# RPC 端点配置
+[rpc_endpoints]
+bsc_testnet = "https://data-seed-prebsc-1-s1.binance.org:8545"
+
+
+# Etherscan 配置 - 用于合约验证
+[etherscan]
+bsc_testnet = { key = "${BSCSCAN_API_KEY}", url = "https://api-testnet.bscscan.com/api" }
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config

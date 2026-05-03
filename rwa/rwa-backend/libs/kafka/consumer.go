@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/IBM/sarama"
 	"github.com/AnchoredLabs/rwa-backend/libs/log"
+	"github.com/IBM/sarama"
 	"go.uber.org/zap"
 )
 
@@ -46,6 +46,7 @@ type Consumer struct {
 	brokerAddr             string
 	partitions             map[string][]int32
 	gracefullyCloseTimeout time.Duration
+	maxTaskTimeout         time.Duration
 	watchSetup             WatchSetupFunc
 }
 
@@ -131,6 +132,7 @@ func NewConsumerWithWatchSetup(broker []string, cfg *sarama.Config, groupID stri
 		autoAck:                autoAck,
 		brokerAddr:             strings.Join(broker, ","),
 		gracefullyCloseTimeout: gracefullyCloseTimeout,
+		maxTaskTimeout:         cfg.Consumer.Group.Session.Timeout,
 		watchSetup:             watchSetup,
 	}
 	var err error
@@ -261,15 +263,21 @@ func (k *Consumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim saram
 				return nil // channel closed, exit
 			}
 			traceLog := GetTraceID(message.Headers)
-			// TODO task timeout is not using kafka's max task timeout config. Reason: if developer sets inappropriate timeout, it easily causes continuous retries, adding complexity.
-			// For kafka tasks, optimization can be done from monitoring system for tasks with long processing times
-			ctx := context.WithValue(context.Background(), log.TraceID, traceLog)
+			baseCtx := context.WithValue(context.Background(), log.TraceID, traceLog)
+			ctx := baseCtx
+			cancel := func() {}
+			if k.maxTaskTimeout > 0 {
+				ctx, cancel = context.WithTimeout(baseCtx, k.maxTaskTimeout)
+			}
 			// Note: the callback function is prohibited from starting another goroutine for separate processing unless you know what you're doing.
 			if callback, ok := k.messageCallbackMap[message.Topic]; ok {
-				if err := k.handleMessageByTakeTime(ctx, session, message, callback); err != nil {
+				err := k.handleMessageByTakeTime(ctx, session, message, callback)
+				cancel()
+				if err != nil {
 					return err
 				}
 			} else {
+				cancel()
 				log.ErrorZ(ctx, "kafka message not find topic to callback function", zap.String("kafka_topic", message.Topic),
 					zap.Int32("partition", message.Partition), zap.ByteString("key", message.Key))
 				session.MarkMessage(message, "")

@@ -29,6 +29,33 @@ RWA（Real World Assets）代币化平台，将传统美股资产映射为链上
 | **Anchored（锚定方）** | 资产锚定和代币发行方，连接链上链下 |
 | **Broker（Alpaca）** | 传统美股券商，执行真实股票交易 |
 
+**角色关系图**:
+
+```mermaid
+graph LR
+    Trader["Trader 用户: 充值/交易/提现"]
+    Market["RWA Market 平台: 订单撮合与事件路由"]
+    Anchored["Anchored 锚定方: 代币 mint/burn"]
+    Broker["Broker Alpaca: 真实美股交易"]
+    MM["MM 做市商: 非交易时段流动性"]
+
+    Trader -->|1.链上下单/充值/提现| Market
+    Market -->|2.转发订单至券商| Broker
+    Broker -->|3.成交回报| Market
+    Market -->|4.请求mint/burn代币| Anchored
+    Anchored -->|5.铸造/销毁代币给用户| Trader
+    MM <-->|休市时提供流动性| Market
+```
+
+**协作流程说明**:
+
+1. **Trader → RWA Market**：用户通过 DApp 与平台合约交互，提交订单、充值 USDC、提现 USDM
+2. **RWA Market → Broker**：平台监听到链上订单事件后，通过 Alpaca API 在真实美股市场执行交易
+3. **Broker → RWA Market**：Alpaca 成交回报（filled）触发后续链上操作
+4. **RWA Market → Anchored**：平台请求锚定方完成代币操作 —— 买入成交后 mint 股票代币（如 AAPL.anc），卖出成交后 burn 股票代币并 mint USDM
+5. **Anchored → Trader**：代币直接铸造到用户地址，完成链上资产交付
+6. **MM ↔ RWA Market**：美股休市（非交易时段）时，做市商代替 Broker 在平台内提供流动性，使用户可 7×24 交易
+
 ### 1.4 代币体系
 
 | 代币 | 精度 | 说明 |
@@ -178,6 +205,35 @@ RWA（Real World Assets）代币化平台，将传统美股资产映射为链上
   → WebSocket 通知用户
 ```
 
+**状态说明**:
+
+| 阶段 | 状态 | 含义 |
+|------|------|------|
+| 链上 | approve USDM | 授权 OrderContract 合约可从用户地址扣取 USDM |
+| 链上 | 合约锁定 USDM | submitOrder 时将 `price * qty` 的 USDM 转入合约托管（escrow），防止资金不足 |
+| 链上 | markExecuted | 成交后合约结算，扣除实际成交金额，退还多余 USDM（市价单实际价格可能低于报价） |
+| DB | pending | Indexer 监听到 `OrderSubmitted` 事件，用户已下单，等待提交到 Alpaca |
+| DB | accepted | Alpaca 下单成功并返回 `external_order_id`，券商已受理订单 |
+| DB | filled | Alpaca Stream 监听到 `filled` 事件，订单完全成交，触发 `markExecuted` 结算和 `mint` 铸造代币 |
+
+**qty和price说明**:
+- qty（quantity）= 10，要买的股数（10 股 AAPL）
+- price = 用户愿意支付的每股价格（如 $180.5）
+
+合约锁定的 USDM = price × qty，即这笔订单的最大花费（如 180.5 × 10 = 1805 USDM）。
+
+成交后通过 markExecuted 多退少补：
+- 市价单：实际成交价可能低于报价，多余部分退还
+- 限价单：按指定价格成交，差额退还
+
+**订单生命周期**:
+
+```
+pending → accepted → filled
+   │                     │
+   └→ rejected/cancelled └→ 结束（退款）
+```
+
 **验收标准**:
 - [x] AC1: Indexer 正确解析 `OrderSubmitted` 事件，提取 user, orderId, symbol, qty, price, side, orderType, tif
 - [x] AC2: DB 创建订单记录，client_order_id 对应链上 orderId
@@ -203,6 +259,9 @@ RWA（Real World Assets）代币化平台，将传统美股资产映射为链上
 | fill 事件重复到达 | 通过 execution_id 去重，保证幂等性 |
 | Alpaca WebSocket 断线 | 自动重连（指数退避），重连后自动重订阅 trade_updates |
 | GTC 订单休市（done_for_day） | 暂停处理，等待下一交易日继续 |
+
+> GTC(Good Till Cancelled, 撤销前有效): 是订单有效期类型（TimeInForce）的一种，意思是订单会一直有效，直到被手动取消或成交。与之对应的是 PRD 流程中出现的 DAY（当日有效），当天收盘未成交就自动过期。
+> PRD 中提到 GTC 订单在休市时会收到 done_for_day 事件，暂停处理，等下一交易日继续，而不是直接过期。
 
 **负责人**: Golang Developer + Contract Engineer
 
@@ -413,6 +472,112 @@ RWA（Real World Assets）代币化平台，将传统美股资产映射为链上
 - [ ] AC6: 提现操作状态：PENDING → REDEEMED
 
 **负责人**: Contract Engineer + Golang Developer
+
+---
+
+### F3.5 为什么需要 USDM（ancUSDC）而不是直接使用 USDC 交易
+
+#### 技术原因：精度不匹配
+
+| 代币 | 精度 |
+|------|------|
+| USDC | **6 位**（1 USD = 1,000,000） |
+| USDM (ancUSDC) | **18 位** |
+| 股票代币（AAPL.anc） | **18 位** |
+
+如果直接用 USDC 交易，6 位精度与 18 位精度的股票代币之间做乘除运算，Solidity 中容易出现**精度丢失**。统一为 18 位后，链上所有代币精度一致，计算简单安全。
+
+#### 业务原因
+
+| 考虑 | 说明 |
+|------|------|
+| **平台内闭环** | USDM 是平台内流通货币，USDC 是外部稳定币。充值/提现是明确的边界操作，方便对账 |
+| **风控卡点** | 充值 USDC → USDM 的过程可以加审核（生产级 Gate 的 pending 机制），直接用 USDC 就没有这个卡点 |
+| **手续费/汇率** | 未来如果在充值环节收取手续费或调整汇率，有中间代币更容易操作 |
+| **合规隔离** | USDC 在用户和 Gate 之间流转，USDM 在平台内流转，两条资金流清晰分离 |
+
+简单说：**USDM 就是平台内的"游戏币"，USDC 是真钱**。进门换币、出门换回，中间的交易全用统一精度的平台币，技术上好算，业务上好管。
+
+---
+
+### F3.6 POC Gate 与生产级 Gate 对比
+
+> **目标**: 说明 POC 版和生产级 Gate 的区别、设计动机以及生产级场景下的数据流
+
+#### POC Gate vs 生产级 Gate
+
+| 对比项 | POC Gate | 生产级 Gate |
+|--------|---------|------------|
+| 充值结果 | 立即 mint 可用的 USDM | 先 mint pendingAncUSDC（不可交易），确认后转 ancUSDC |
+| 提现结果 | 立即返回 USDC | 先 mint pendingUSDC 凭证，确认后返回真实 USDC |
+| 确认环节 | 无（链上操作即最终结果） | 后端验证 Broker 侧资金到账/赎回 |
+| 风险承担 | 平台承担资金未到账风险 | 用户持有凭证，确认后才到账 |
+| 适用场景 | 开发测试、快速验证 | 生产环境、资金安全要求高 |
+
+#### 设计动机
+
+1. **资金安全**：链上操作是即时的，但链下资金转移有延迟。POC 版无条件信任链上操作，生产版必须验证链下资金真实到账后才放行
+2. **防止套利攻击**：如果充值立即到账，攻击者可在 USDC 未真实到账前利用 ancUSDC 交易提现，造成资金空洞
+3. **合规要求**：生产环境需要可审计的资金流 — 凭证（pending token）提供了明确的审计轨迹
+4. **异常处理**：如果 Broker 侧出问题（入账失败、延迟），pending 状态可以暂停处理，而不是让错误扩散到交易系统
+
+#### 生产级 Gate 完整数据流
+
+**充值数据流（USDC → ancUSDC）**:
+
+```
+链上                              链下
+────                              ────
+用户 approve USDC
+    │
+    ▼
+Gate.deposit(usdcAmount)
+    │ USDC → Gate 合约
+    │ mint pendingAncUSDC → 用户
+    │ emit PendingDeposit
+    │
+    ▼                             平台将 USDC 兑换为 USD
+Indexer 消费事件 ──────────────→ 转入 Alpaca 券商账户
+    │                                  │
+    │                              确认 Alpaca 入账
+    │                                  │
+    │ ◄──────────────────────────── processDeposit
+    │
+Gate.processDeposit(opId, amount)
+    │ burn pendingAncUSDC
+    │ mint ancUSDC → 用户
+    │ emit DepositProcessed
+    ▼
+用户获得可交易的 ancUSDC
+```
+
+**提现数据流（ancUSDC → USDC）**:
+
+```
+链上                              链下
+────                              ────
+用户 approve ancUSDC
+    │
+    ▼
+Gate.withdraw(ancUSDCAmount)
+    │ burn ancUSDC
+    │ mint pendingUSDC → 用户
+    │ emit PendingWithdraw
+    │
+    ▼                             平台从 Alpaca 赎回 USD
+Indexer 消费事件 ──────────────→ 兑换为 USDC 准备返还
+    │                                  │
+    │                              确认 USDC 就绪
+    │                                  │
+    │ ◄──────────────────────────── processWithdrawal
+    │
+Gate.processWithdrawal(opId, amount)
+    │ burn pendingUSDC
+    │ transfer USDC → 用户
+    │ emit WithdrawalProcessed
+    ▼
+用户获得真实 USDC
+```
 
 ---
 

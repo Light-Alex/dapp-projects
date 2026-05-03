@@ -378,4 +378,3 @@ func (h *HandleOrderSubmitted) callCancelOrder(orderId *big.Int) {
 		zap.String("order_id", orderId.String()),
 		zap.String("tx_hash", tx.Hash().Hex()))
 }
-

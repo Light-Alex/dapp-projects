@@ -55,6 +55,31 @@ func (s *SubUnsubService) bindEvent(ctx context.Context) {
 	})
 }
 
+// handleMessage 处理订阅/取消订阅消息
+//
+// WsIncomeMessage 格式:
+//
+//	{
+//	  "id": 1,                    // 消息ID，用于关联响应
+//	  "method": "SUBSCRIBE",      // "SUBSCRIBE" 或 "UNSUBSCRIBE"
+//	  "params": {                 // 订阅参数
+//	    "type": "bar",            // 订阅类型: "bar" 或 "order"
+//	    "symbols": ["AAPL","MSFT"], // bar类型必需: 股票代码列表
+//	    "account_id": 12345       // order类型必需: 账户ID
+//	  }
+//	}
+//
+// 示例 - 订阅K线:
+//
+//	{"id":1,"method":"SUBSCRIBE","params":{"type":"bar","symbols":["AAPL"]}}
+//
+// 示例 - 订阅订单:
+//
+//	{"id":2,"method":"SUBSCRIBE","params":{"type":"order","account_id":12345}}
+//
+// 示例 - 取消订阅:
+//
+//	{"id":3,"method":"UNSUBSCRIBE","params":{"type":"bar","symbols":["AAPL"]}}
 func (s *SubUnsubService) handleMessage(ctx context.Context, session *melody.Session, message *types.WsIncomeMessage, isSub bool) {
 	t, ok := message.Params["type"].(string)
 	if !ok {
